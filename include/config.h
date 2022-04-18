@@ -1,4 +1,4 @@
-// Open TAS Controller - Connects to game consoles via a Raspberry Pi Pico
+// Open TAS Controller - Connects to game consoles via a Raspberry Pi Pico// Open TAS Controller - Connects to game consoles via a Raspberry Pi Pico
 // Copyright (C) 2022  Russell Small
 //
 // This program is free software: you can redistribute it and/or modify
@@ -15,11 +15,11 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
-#include "global.h"
 
-void print_byte_hex(uint data);
-void print_short_hex(uint data);
-void print_int_hex(uint data);
-void print_bytes_hex(uint8_t data[], uint count);
+#define ONELINE_PIN_CONTROLLER_0 2
+#define ONELINE_PIN_CONTROLLER_1 3
+#define ONELINE_PIN_CONTROLLER_2 4
+#define ONELINE_PIN_CONTROLLER_3 5
 
-void print(char *string);
+// Each byte of data takes 32us to transmit.
+#define ONELINE_READ_TIMEOUT_US 48

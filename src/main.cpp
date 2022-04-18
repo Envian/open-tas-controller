@@ -14,17 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <pico/stdlib.h>
-#include <pico/multicore.h>
+#include "global.h"
 
+#include <pico/time.h>
 #include "n64.h"
 
 int main() {
+    debug_init();
     stdio_init_all();
-    multicore_launch_core1(&n64::read);
-    n64::debug_print();
-    
+    n64::record();
+
     while(true) {
-        
+
     }
 }

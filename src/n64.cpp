@@ -15,102 +15,81 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "n64.h"
-#include "n64.pio.h"
 
 #include <stdio.h>
-#include <pico/stdlib.h>
+#include <pico/multicore.h>
 #include <hardware/irq.h>
-#include <hardware/pio.h>
-#include <hardware/timer.h>
 
-#include "global.h"
 #include "helpers.h"
-
+#include "oneline.h"
 
 // REFERENCE: https://kthompson.gitlab.io/2016/07/26/n64-controller-protocol.html
-#define getBit(reading) (reading == 0b11)
 
-n64::DataPacket last_read;
-volatile bool is_updated;
+#define BUFFER_SIZE 8
 
-void handler_n64_debug() {
-    uint skip_bit = 0;
-    uint bytes = 0;
-    uint data = 0;
-    
-    for (uint x = 0; x < 8; x++) {
-        last_read.command <<= 1;
-        last_read.command |= getBit(pio_sm_get_blocking(pio0, 0));
-    }
-    
-    switch (last_read.command) {
-        case 0x02: // Command includes 2 extra bytes denoting the memory address.
-            skip_bit = 2 * 8;
-            break;
-        case 0x03:
-            skip_bit = (2 + 32) * 8;
-            break;
-    }
-    
-    uint last_bit = time_us_32();
-    last_read.timestamp = last_bit;
-    last_read.bits = 0;
-    
-    // Stop reading after 32ms of no response. (4ms per bit, with a delay for reading from pack)
-    do {
-        if (!pio_sm_is_rx_fifo_empty(pio0, 0)) {
-            uint reading = pio_sm_get(pio0, 0);
-            if (reading == 1) {
+volatile n64::DataPacket input_buffer[BUFFER_SIZE];
+volatile uint packets = 0;
+
+namespace n64::core1 {
+    void handle_packet() {
+        uint timestamp = time_us_32();
+        uint controller = oneline::get_controller();
+        uint command = oneline::read_byte_blocking(controller);
+        
+        uint console_bytes;
+        switch (command) {
+            case -1:
+                return;
+            case 2:
+                console_bytes = 2;
                 break;
-            }
-            last_bit = time_us_32();
-            
-            // Ignore the handover bit.
-            if (last_read.bits == skip_bit) {
-                skip_bit = -1;
-            } else {
-                data <<= 1;
-                data |= getBit(reading);
-                last_read.bits++;
-                
-                if (!(last_read.bits % 8)) {
-                    last_read.data[bytes] = data;
-                    bytes++;
-                }
-            }
+            case 3:
+                console_bytes = 34;
+                break;
+            default:
+                console_bytes = 0;
         }
-    } while (time_us_32() - last_bit < 32);
+        
+        volatile DataPacket *packet = &input_buffer[packets % BUFFER_SIZE];
+        uint bits = oneline::read_bytes_blocking((uint8_t*)packet->data, controller, DATA_PACKET_BUFFER, console_bytes);
+        packet->timestamp = timestamp;
+        packet->source = controller;
+        packet->command = command;
+        packet->bits = bits - 9; // The command & handover bits are counted.
+        packets++;
+    }
     
-    is_updated = true;
-    irq_clear(0);
+    void record_init() {
+        oneline::init();
+        oneline::set_handler(&handle_packet);
+        
+        // CPU1 needs to spin to keep things working right.
+        while (true) sleep_ms(1000);
+    }
 }
 
 namespace n64 {
-    void read() {
-        irq_set_exclusive_handler(PIO0_IRQ_0, &handler_n64_debug);
-        irq_set_enabled(PIO0_IRQ_0, true);
-        pio_set_irq0_source_enabled(pio0, pis_sm0_rx_fifo_not_empty, true);
+    void record() {
+        multicore_launch_core1(&core1::record_init);
         
-        uint offset = pio_add_program(pio0, &n64_read_program);
-        n64_read_program_install(pio0, 0, offset, 0);
-        pio_sm_set_enabled(pio0, 0, true);
-    }
-    
-    void debug_print() {
+        uint printed_packets = 0;
+        uint current_packet = 0;
+        
         while (true) {
-            while (!is_updated) { }
-            is_updated = false;
+            while (printed_packets == packets);
             
-            print_int_hex(last_read.timestamp);
+            volatile DataPacket *packet = &input_buffer[printed_packets % BUFFER_SIZE];
+            print_int_hex(packet->timestamp);
             putchar(',');
-            putchar('0' + last_read.source);
+            putchar('0' + packet->source);
             putchar(',');
-            print_byte_hex(last_read.command);
+            print_byte_hex(packet->command);
             putchar(',');
-            print_byte_hex(last_read.bits / 4);
+            print_short_hex(packet->bits);
             putchar(',');
-            print_bytes_hex((uint8_t*)last_read.data, last_read.bits / 8);
+            print_bytes_hex((uint8_t*)packet->data, packet->bits / 8);
             putchar('\n');
+            printed_packets++;
         }
     }
 }

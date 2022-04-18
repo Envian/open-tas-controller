@@ -15,7 +15,9 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
-#include <pico/stdlib.h>
+#include "global.h"
+
+#define DATA_PACKET_BUFFER 36
 
 namespace n64 {
     struct DataPacket {
@@ -23,9 +25,8 @@ namespace n64 {
         uint source;
         uint command;
         uint bits;
-        uint8_t data[35]; // Needs to be large enough for read/writes
+        uint8_t data[DATA_PACKET_BUFFER];
     };
-    
-    void read();
-    void debug_print();
+
+    void record();
 }

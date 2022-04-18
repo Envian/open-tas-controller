@@ -16,6 +16,7 @@
 
 #pragma once
 #include <pico/stdlib.h>
-#include <hardware/clocks.h>
+#include "config.h"
+#include "debug.h"
 
-#define F_CPU clock_get_hz(clk_sys)
+#define min(a, b) (((a) < (b)) ? (a) : (b))

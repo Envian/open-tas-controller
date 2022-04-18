@@ -14,12 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#pragma once
-#include "global.h"
+#include "debug.h"
 
-void print_byte_hex(uint data);
-void print_short_hex(uint data);
-void print_int_hex(uint data);
-void print_bytes_hex(uint8_t data[], uint count);
-
-void print(char *string);
+void debug_init() {
+    gpio_init(15);
+    gpio_set_dir(15, GPIO_OUT);
+    TEMP_PIN_OFF();
+}

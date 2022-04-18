@@ -1,4 +1,4 @@
-// Open TAS Controller - Connects to game consoles via a Raspberry Pi Pico
+// Open TAS Controller - Connects to game consoles via a Raspberry Pi Pico// Open TAS Controller - Connects to game consoles via a Raspberry Pi Pico
 // Copyright (C) 2022  Russell Small
 //
 // This program is free software: you can redistribute it and/or modify
@@ -15,11 +15,16 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
-#include "global.h"
 
-void print_byte_hex(uint data);
-void print_short_hex(uint data);
-void print_int_hex(uint data);
-void print_bytes_hex(uint8_t data[], uint count);
+#define ERROR(message) static_assert(false, message);
 
-void print(char *string);
+#include <stdio.h>
+#include "helpers.h"
+#include "hardware/gpio.h"
+
+#define TEMP_PUT(a) putchar(a); putchar('\n');
+#define TEMP_PRINT_VAR(val) print(#val ": "); print_int_hex(val); putchar('\n');
+#define TEMP_PIN_ON() gpio_put(15, 1);
+#define TEMP_PIN_OFF() gpio_put(15, 0);
+
+void debug_init();

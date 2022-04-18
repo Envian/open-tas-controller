@@ -26,9 +26,19 @@ char NIBLE_CHARACTER_MAPPING[] = {
     'C', 'D', 'E', 'F'
 };
 
-void print_byte_hex(uint byte) {
-    putchar(NIBLE_CHARACTER_MAPPING[(byte & 0xF0) >> 4]);
-    putchar(NIBLE_CHARACTER_MAPPING[byte & 0xF]);
+void print_byte_hex(uint data) {
+    putchar(NIBLE_CHARACTER_MAPPING[(data >> 4) & 0xF]);
+    putchar(NIBLE_CHARACTER_MAPPING[data & 0xF]);
+}
+
+void print_short_hex(uint data) {
+    print_byte_hex(data >> 8);
+    print_byte_hex(data);
+}
+
+void print_int_hex(uint data) {
+    print_short_hex(data >> 16);
+    print_short_hex(data);
 }
 
 void print_bytes_hex(uint8_t data[], uint count) {
@@ -37,9 +47,9 @@ void print_bytes_hex(uint8_t data[], uint count) {
     }
 }
 
-void print_int_hex(uint byte) {
-    for (uint n = 0; n < 8; n++) {
-        putchar(NIBLE_CHARACTER_MAPPING[byte >> 28]);
-        byte <<= 4;
+void print(char *string) {
+    while (*string) {
+        putchar(*string);
+        string++;
     }
 }

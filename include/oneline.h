@@ -17,9 +17,19 @@
 #pragma once
 #include "global.h"
 
-void print_byte_hex(uint data);
-void print_short_hex(uint data);
-void print_int_hex(uint data);
-void print_bytes_hex(uint8_t data[], uint count);
+#include <hardware/pio.h>
+#include <hardware/irq.h>
 
-void print(char *string);
+#define ONELINE_PIO pio0
+#define ONELINE_IRQ PIO0_IRQ_0
+
+namespace oneline {
+    inline void set_handler(irq_handler_t handler) { 
+        irq_set_exclusive_handler(ONELINE_IRQ, handler); 
+    };
+    void init();
+    
+    uint get_controller();
+    uint read_byte_blocking(uint controller);
+    uint read_bytes_blocking(uint8_t *buffer, uint controller, uint max, uint console_bytes);
+}
