@@ -1,5 +1,6 @@
 .pio
 *.pio.h
+pio.h/
 
 include/pico
 .gcc-flags.json

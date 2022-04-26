@@ -34,7 +34,7 @@ namespace n64::core1 {
     void handle_packet() {
         uint timestamp = time_us_32();
         uint controller = oneline::get_controller();
-        uint command = oneline::read_byte_blocking(controller);
+        int command = oneline::read_byte_blocking(controller);
         
         uint console_bytes;
         switch (command) {

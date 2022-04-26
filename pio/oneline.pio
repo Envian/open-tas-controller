@@ -20,7 +20,7 @@
 // controller, the line is pulled low for 1us again (appearing as a 1 bit). The
 // controller can start responding soon after the line is let high again, in
 // a previous version of this code, a response within 1us of the handover bit
-// returning high worked fine.111111122222222222
+// returning high worked fine.
 
 // Once a controller is done responding, it pulls the line low for 2us.
 
@@ -38,7 +38,7 @@
 // ---------------/
 
 // Timings
-// A......B...T...C...T...D........A
+// A......B....T..C...T...D........A
 
 // A: When the line first drops low
 // B: When the line starts rising high for a 1 bit
