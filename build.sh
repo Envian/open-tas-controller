@@ -12,7 +12,6 @@ make -i
 
 cp -u *.pio.h "$PIO_H_DIR"
 
-
 # thanks to https://github.com/ConorShore/RPi_Pico_Autoloader
 # for the framework for this section
 PICO_FOLDER=

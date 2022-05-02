@@ -33,21 +33,21 @@ volatile uint packets = 0;
 namespace n64::core1 {
     void handle_packet() {
         uint timestamp = time_us_32();
-        uint controller = oneline::get_controller();
+        oneline::Controller controller = oneline::get_controller();
         int command = oneline::read_byte_blocking(controller);
         
         uint console_bytes;
         switch (command) {
-            case -1:
-                return;
-            case 2:
-                console_bytes = 2;
-                break;
-            case 3:
-                console_bytes = 34;
-                break;
-            default:
-                console_bytes = 0;
+        case -1:
+            return;
+        case 2: // Read from game pak
+            console_bytes = 2;
+            break;
+        case 3: // Write to game pak
+            console_bytes = 34;
+            break;
+        default:
+            console_bytes = 0;
         }
         
         volatile DataPacket *packet = &input_buffer[packets % BUFFER_SIZE];
@@ -59,12 +59,39 @@ namespace n64::core1 {
         packets++;
     }
     
+    void handle_packet_write_test() {
+TEMP_PIN_ON();
+        oneline::Controller controller = oneline::get_controller();
+        int command = oneline::read_byte_blocking(controller);
+        uint address;
+        
+        switch (command) {
+        case 0: // Setup Controller
+        case 0xFF: // Reset Controller 
+            oneline::write_int(controller, 0x050001, 3);
+            break;
+        case 1: // Read Inputs
+            oneline::write_int(controller, 0, 4);
+            break;
+        case 2:
+            address = oneline::read_byte_blocking(controller);
+            address = (address << 8) | oneline::read_byte_blocking(controller);
+            break;
+        default:
+            // Unknown commands: Discard all the data
+            oneline::read_discard(controller);
+            break;
+        }
+        pio_interrupt_clear(ONELINE_PIO, controller);
+TEMP_PIN_OFF();
+    }
+    
     void record_init() {
         oneline::init();
-        oneline::set_handler(&handle_packet);
+        oneline::set_handler(&handle_packet_write_test);
         
         // CPU1 needs to spin to keep things working right.
-        while (true) sleep_ms(1000);
+        while (true) tight_loop_contents();
     }
 }
 

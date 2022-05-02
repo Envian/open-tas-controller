@@ -16,10 +16,10 @@
 
 #pragma once
 
-#define ONELINE_PIN_CONTROLLER_0 2
-#define ONELINE_PIN_CONTROLLER_1 3
-#define ONELINE_PIN_CONTROLLER_2 4
-#define ONELINE_PIN_CONTROLLER_3 5
+#define ONELINE_PIN_PORT_0 6
+#define ONELINE_PIN_PORT_1 7
+#define ONELINE_PIN_PORT_2 26
+#define ONELINE_PIN_PORT_3 27
 
 // Each byte of data takes 32us to transmit.
 #define ONELINE_READ_TIMEOUT_US 48

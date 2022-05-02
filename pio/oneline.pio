@@ -51,6 +51,7 @@
 .define public F_PIO (F_PIO_MHZ * 1000000)
 
 .wrap_target
+start:
     mov y x
 next_bit:
     wait 1 pin 0
@@ -70,7 +71,24 @@ one_bit:
     
 public reset_bit:
     push
-    irq clear 0 rel
     mov y ! y
     in y 32
+    jmp start
+
+
+// First command needs to have some delay...
+public write:
+    out y 32            [F_PIO_MHZ * 4 - 1]
+write_loop:
+    set pindirs 1       [F_PIO_MHZ - 1]
+    out pindirs 1       [(F_PIO_MHZ * 2) - 1]
+    set pindirs 0       [F_PIO_MHZ - 2]
+    jmp y-- write_loop
+    
+// Cleanup PIO state & Send end bit (2us low)
+    set pindirs 1       [(F_PIO_MHZ * 2) - 5]
+    mov isr null
+    mov osr null
+    out null 32
+    set pindirs 0
 .wrap

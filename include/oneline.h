@@ -24,12 +24,24 @@
 #define ONELINE_IRQ PIO0_IRQ_0
 
 namespace oneline {
+    enum Controller {
+        controller_1 = 0,
+        controller_2 = 1,
+        controller_3 = 2,
+        controller_4 = 3,
+        controller_invalid = -1
+    };
+    
     inline void set_handler(irq_handler_t handler) { 
         irq_set_exclusive_handler(ONELINE_IRQ, handler); 
     };
     void init();
     
-    uint get_controller();
-    uint read_byte_blocking(uint controller);
-    uint read_bytes_blocking(uint8_t *buffer, uint controller, uint max, uint console_bytes);
+    Controller get_controller();
+    uint read_byte_blocking(Controller controller);
+    uint read_bytes_blocking(uint8_t *buffer, Controller controller, uint max, uint console_bytes);
+    void read_discard(Controller controller);
+    
+    void write_int(Controller controller, uint data, uint count);
+    void write_bytes(Controller controller, uint8_t *buffer, uint count);
 }
