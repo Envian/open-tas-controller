@@ -38,10 +38,9 @@ namespace oneline {
     void init();
     
     Controller get_controller();
-    uint read_byte_blocking(Controller controller);
+    int read_byte_blocking(Controller controller);
     uint read_bytes_blocking(uint8_t *buffer, Controller controller, uint max, uint console_bytes);
     void read_discard(Controller controller);
     
-    void write_int(Controller controller, uint data, uint count);
-    void write_bytes(Controller controller, uint8_t *buffer, uint count);
+    void write_bytes(Controller controller, uint buffer[], uint bytes);
 }

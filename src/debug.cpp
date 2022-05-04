@@ -19,5 +19,5 @@
 void debug_init() {
     gpio_init(15);
     gpio_set_dir(15, GPIO_OUT);
-    TEMP_PIN_OFF();
+    TEMP_PIN_ON();
 }

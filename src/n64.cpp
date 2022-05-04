@@ -59,19 +59,23 @@ namespace n64::core1 {
         packets++;
     }
     
-    void handle_packet_write_test() {
-TEMP_PIN_ON();
+    uint test_controller_type = 0x05000100;
+    uint test_controller_response = 0;
+    
+    void __time_critical_func(handle_packet_write_test)() {
         oneline::Controller controller = oneline::get_controller();
         int command = oneline::read_byte_blocking(controller);
         uint address;
+
+        QUICK_SLEEP_US(5);
         
         switch (command) {
         case 0: // Setup Controller
-        case 0xFF: // Reset Controller 
-            oneline::write_int(controller, 0x050001, 3);
+        case 0xFF: // Reset Controller
+            oneline::write_bytes(controller, &test_controller_type, 3);
             break;
         case 1: // Read Inputs
-            oneline::write_int(controller, 0, 4);
+            oneline::write_bytes(controller, &test_controller_response, 4);
             break;
         case 2:
             address = oneline::read_byte_blocking(controller);
@@ -83,7 +87,6 @@ TEMP_PIN_ON();
             break;
         }
         pio_interrupt_clear(ONELINE_PIO, controller);
-TEMP_PIN_OFF();
     }
     
     void record_init() {

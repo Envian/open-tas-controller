@@ -8,6 +8,9 @@ include($ENV{PICO_SDK_PATH}/pico_sdk_init.cmake)
 project(open-tas-controller C CXX ASM)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-ignored-qualifiers")
+
 pico_sdk_init()
 
 file(GLOB SRC_FILES CONFIGURE_DEPENDS "./src/*.cpp")

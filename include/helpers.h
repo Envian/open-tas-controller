@@ -17,6 +17,8 @@
 #pragma once
 #include "global.h"
 
+#define QUICK_SLEEP_US(t) { uint _t = time_us_32() + t; while(time_us_32() < _t); }
+
 void print_byte_hex(uint data);
 void print_short_hex(uint data);
 void print_int_hex(uint data);
