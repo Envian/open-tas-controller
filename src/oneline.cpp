@@ -20,18 +20,27 @@
 #include <hardware/pio.h>
 #include <hardware/clocks.h>
 
-// PIO data can only be 8 bits due to pushing 1 bit at a time and auto push.
-// To assist with reading all data from the N64, after all data is received,
-// the PIO program sends the number of bits read + BIT_COUNT_FLAG.
-#define BIT_COUNT_FLAG (uint)(1 << 31)
-
 namespace oneline {
     uint pio_offset = 0;
     
-    void setup_controller(Controller controller, uint pin) {
+    // Shortcut Methods
+    inline bool can_read(Port port) { return !pio_sm_is_rx_fifo_empty(ONELINE_PIO, (uint)port); }
+    inline uint32_t read(Port port) { return pio_sm_get(ONELINE_PIO, (uint)port); }
+    inline bool can_write(Port port) { return !pio_sm_is_tx_fifo_full(ONELINE_PIO, (uint)port); }
+    inline void write(Port port, uint32_t data) { pio_sm_put(ONELINE_PIO, (uint)port, data); }
+    inline void write_blocking(Port port, uint32_t data) { pio_sm_put_blocking(ONELINE_PIO, (uint)port, data); }
+    inline void jump(Port port, uint offset) { pio_sm_exec(ONELINE_PIO, port, pio_encode_jmp(pio_offset + offset)); }
+    inline void abort_read(Port port) { jump(port, oneline_offset_reset_bit); }
+    inline void begin_write(Port port) { jump(port, oneline_offset_reset_bit); }
+
+    void set_handler(irq_handler_t handler) { 
+        irq_set_exclusive_handler(ONELINE_IRQ, handler); 
+    };
+    
+    void setup_port(Port port, uint pin) {
         pio_gpio_init(ONELINE_PIO, pin);
-        pio_sm_set_consecutive_pindirs(ONELINE_PIO, (uint)controller, pin, 1, false);
-        pio_set_irq0_source_enabled(ONELINE_PIO, (pio_interrupt_source)(pis_interrupt0 + (uint)controller), true);
+        pio_sm_set_consecutive_pindirs(ONELINE_PIO, (uint)port, pin, 1, false);
+        pio_set_irq0_source_enabled(ONELINE_PIO, (pio_interrupt_source)(pis_interrupt0 + (uint)port), true);
         
         pio_sm_config reader_config = oneline_program_get_default_config(pio_offset);
         sm_config_set_clkdiv(&reader_config, (float)clock_get_hz(clk_sys) / (float)oneline_F_PIO);
@@ -44,72 +53,65 @@ namespace oneline {
         sm_config_set_in_shift(&reader_config, false /*shift right*/, false /*auto push*/, 8 /*push size*/);
         sm_config_set_out_shift(&reader_config, false /*shift left*/, false /*auto pull*/, 32 /*pull size*/);
         
-        pio_sm_init(ONELINE_PIO, (uint)controller, pio_offset, &reader_config);
-        // Reader depends on X being defaulted to 0x8FFFFFFF
-        pio_sm_put(ONELINE_PIO, (uint)controller, ~BIT_COUNT_FLAG);
-        pio_sm_exec_wait_blocking(ONELINE_PIO, (uint)controller, pio_encode_pull(false, true));
-        pio_sm_exec_wait_blocking(ONELINE_PIO, (uint)controller, pio_encode_out(pio_x, 32));
-        
-        pio_sm_set_enabled(ONELINE_PIO, (uint)controller, true);
+        pio_sm_init(ONELINE_PIO, (uint)port, pio_offset, &reader_config);
+        // Reader depends on X being defaulted to 0xFFFFFFFF
+        pio_sm_exec(ONELINE_PIO, (uint)port, pio_encode_mov_not(pio_x, pio_null));
+        pio_sm_set_enabled(ONELINE_PIO, (uint)port, true);
     }
     
     void init() {
         pio_offset = pio_add_program(ONELINE_PIO, &oneline_program);
         irq_set_enabled(ONELINE_IRQ, true);
         
-        setup_controller(controller_1, ONELINE_PIN_PORT_0);
-        setup_controller(controller_2, ONELINE_PIN_PORT_1);
-        setup_controller(controller_3, ONELINE_PIN_PORT_2);
-        setup_controller(controller_4, ONELINE_PIN_PORT_3);
+        setup_port(port_1, ONELINE_PIN_PORT_1);
+        setup_port(port_2, ONELINE_PIN_PORT_2);
+        setup_port(port_3, ONELINE_PIN_PORT_3);
+        setup_port(port_4, ONELINE_PIN_PORT_4);
     }
     
-    Controller get_controller() {
-        for (int n = 0; n < 4; n++) {
-            if (pio_interrupt_get(ONELINE_PIO, n)) {
-                return (Controller)n;
-            }
-        }
-        return controller_invalid;
+    Port get_port() {
+        if (pio_interrupt_get(ONELINE_PIO, (uint)port_1)) { return port_1; }
+        if (pio_interrupt_get(ONELINE_PIO, (uint)port_2)) { return port_2; }
+        if (pio_interrupt_get(ONELINE_PIO, (uint)port_3)) { return port_3; }
+        if (pio_interrupt_get(ONELINE_PIO, (uint)port_4)) { return port_4; }
+        return port_invalid;
     }
     
     // --------------------
     // |     READING      |
     // --------------------
     
-    inline void abort_read(Controller controller) {
-        pio_sm_exec(ONELINE_PIO, controller, pio_encode_jmp(pio_offset + oneline_offset_reset_bit));
-    }
-    
-    int __time_critical_func(read_byte_blocking)(Controller controller) {
-        uint last_activity = time_us_32();
-        do {
-            if (!pio_sm_is_rx_fifo_empty(ONELINE_PIO, (uint)controller)) {
-                uint data = pio_sm_get(ONELINE_PIO, (uint)controller);
-                return (data < BIT_COUNT_FLAG) ? data : -1;
+    int __time_critical_func(read_byte_blocking)(Port port) {
+        uint start_time = time_us_32();
+        while (!TIMED_OUT(start_time, ONELINE_READ_TIMEOUT_US)) {
+            if (can_read(port)) {
+                uint data = read(port);
+                return (data <= 0xFF) ? (int)data : -1;
             }
         }
-        while (time_us_32() - last_activity < ONELINE_READ_TIMEOUT_US);
-        
         return -1;
     }
     
-    uint __time_critical_func(read_bytes_blocking)(uint8_t buffer[], Controller controller, uint count, uint console_bytes) {
-        uint bytes = 0;
+    int __time_critical_func(read_bytes_blocking)(uint8_t buffer[], Port port, int count, int console_bytes) {
+        int bytes = 0;
         uint last_activity = time_us_32();
         uint data;
-        uint reported_bits = 0;
+        int reported_bits = 0;
         
         // Step 1: Read all data from pio.
         while(true) {
-            if (!pio_sm_is_rx_fifo_empty(ONELINE_PIO, (uint)controller)) {
-                uint data = pio_sm_get(ONELINE_PIO, (uint)controller);
-                if (data >= BIT_COUNT_FLAG) {
+            if (can_read(port)) {
+                uint data = read(port);
+                
+                // Values higher than 255 represent the end of a command.
+                // This is a bit-inverted counter of how many bits were read.
+                if (data > 0xFF) {
                     // Safety so we don't rotate out of our memory space.
                     // Left align the last few bits received.
+                    reported_bits = ~data;
                     if (bytes > 0) {
-                        buffer[bytes - 1] <<= 8 - ((data & ~BIT_COUNT_FLAG) % 8);
+                        buffer[bytes - 1] <<= 8 - (reported_bits % 8);
                     }
-                    reported_bits = data & ~BIT_COUNT_FLAG;
                     break;
                 }
                 
@@ -120,8 +122,8 @@ namespace oneline {
                 bytes++;
                 last_activity = time_us_32();
             } 
-            else if (time_us_32() - last_activity >= ONELINE_READ_TIMEOUT_US) {
-                abort_read(controller);
+            else if (TIMED_OUT(last_activity, ONELINE_READ_TIMEOUT_US)) {
+                abort_read(port);
                 last_activity = time_us_32();
             }
         }
@@ -129,7 +131,7 @@ namespace oneline {
         
         // Step 2: Rotate bits to their correct position.
         data = 0;
-        for (uint n = min(bytes, count); n > console_bytes; n--) {
+        for (int n = MIN(bytes, count); n > console_bytes; n--) {
             data = (buffer[n-1] << 1) | (data >> 8);
             buffer[n-1] = (uint8_t)(data & 0xFF);
         }
@@ -137,17 +139,17 @@ namespace oneline {
         return reported_bits;
     }
     
-    void __time_critical_func(read_discard)(Controller controller) {
+    void __time_critical_func(read_discard)(Port port) {
         uint last_activity = time_us_32();
         uint data = 0;
 
-        while(data < BIT_COUNT_FLAG) {
-            if (!pio_sm_is_rx_fifo_empty(ONELINE_PIO, (uint)controller)) {
-                data = pio_sm_get(ONELINE_PIO, (uint)controller);
+        while(data <= 0xFF) {
+            if (can_read(port)) {
+                data = read(port);
                 last_activity = time_us_32();
             } 
-            else if (time_us_32() - last_activity >= ONELINE_READ_TIMEOUT_US) {
-                abort_read(controller);
+            else if (TIMED_OUT(last_activity, ONELINE_READ_TIMEOUT_US)) {
+                abort_read(port);
                 last_activity = time_us_32();
             }
         }
@@ -157,12 +159,13 @@ namespace oneline {
     // |     WRITING      |
     // --------------------
     
-    void __time_critical_func(write_bytes)(Controller controller, uint buffer[], uint bytes) {
-        pio_sm_put(ONELINE_PIO, (uint)controller, bytes * 8);
-        pio_sm_exec(ONELINE_PIO, (uint)controller, pio_encode_jmp(pio_offset + oneline_offset_write));
+    void __time_critical_func(write_bytes)(Port port, uint buffer[], int bytes) {
+        write(port, bytes * 8);
+        begin_write(port);
         
-        for (uint words_written = 0; words_written * 4 < bytes; words_written++) {
-            pio_sm_put_blocking(ONELINE_PIO, (uint)controller, ~buffer[words_written]);
+        for (int words_written = 0; words_written * 4 < bytes; words_written++) {
+            // Because we write pindirs with a pull up resistor, this is inverted.
+            write_blocking(port, ~buffer[words_written]);
         }
     }
 }

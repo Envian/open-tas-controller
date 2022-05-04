@@ -19,4 +19,4 @@
 #include "config.h"
 #include "debug.h"
 
-#define min(a, b) (((a) < (b)) ? (a) : (b))
+#define TIMED_OUT(start, duration) (time_us_32() - start >= duration)

@@ -33,8 +33,8 @@ volatile uint packets = 0;
 namespace n64::core1 {
     void handle_packet() {
         uint timestamp = time_us_32();
-        oneline::Controller controller = oneline::get_controller();
-        int command = oneline::read_byte_blocking(controller);
+        oneline::Port port = oneline::get_port();
+        int command = oneline::read_byte_blocking(port);
         
         uint console_bytes;
         switch (command) {
@@ -51,9 +51,9 @@ namespace n64::core1 {
         }
         
         volatile DataPacket *packet = &input_buffer[packets % BUFFER_SIZE];
-        uint bits = oneline::read_bytes_blocking((uint8_t*)packet->data, controller, DATA_PACKET_BUFFER, console_bytes);
+        uint bits = oneline::read_bytes_blocking((uint8_t*)packet->data, port, DATA_PACKET_BUFFER, console_bytes);
         packet->timestamp = timestamp;
-        packet->source = controller;
+        packet->source = port;
         packet->command = command;
         packet->bits = bits - 9; // The command & handover bits are counted.
         packets++;
@@ -63,30 +63,31 @@ namespace n64::core1 {
     uint test_controller_response = 0;
     
     void __time_critical_func(handle_packet_write_test)() {
-        oneline::Controller controller = oneline::get_controller();
-        int command = oneline::read_byte_blocking(controller);
+        oneline::Port port = oneline::get_port();
+        int command = oneline::read_byte_blocking(port);
         uint address;
 
-        QUICK_SLEEP_US(5);
+        uint timeout = time_us_32();
+        while (!TIMED_OUT(timeout, 5));
         
         switch (command) {
         case 0: // Setup Controller
         case 0xFF: // Reset Controller
-            oneline::write_bytes(controller, &test_controller_type, 3);
+            oneline::write_bytes(port, &test_controller_type, 3);
             break;
         case 1: // Read Inputs
-            oneline::write_bytes(controller, &test_controller_response, 4);
+            oneline::write_bytes(port, &test_controller_response, 4);
             break;
         case 2:
-            address = oneline::read_byte_blocking(controller);
-            address = (address << 8) | oneline::read_byte_blocking(controller);
+            address = oneline::read_byte_blocking(port);
+            address = (address << 8) | oneline::read_byte_blocking(port);
             break;
         default:
             // Unknown commands: Discard all the data
-            oneline::read_discard(controller);
+            oneline::read_discard(port);
             break;
         }
-        pio_interrupt_clear(ONELINE_PIO, controller);
+        pio_interrupt_clear(ONELINE_PIO, port);
     }
     
     void record_init() {

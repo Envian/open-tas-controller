@@ -72,7 +72,6 @@ one_bit:
     
 public reset_bit:
     push noblock
-    mov y ! y
     in y 32
     push
     jmp start

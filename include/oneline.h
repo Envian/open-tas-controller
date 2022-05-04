@@ -24,23 +24,21 @@
 #define ONELINE_IRQ PIO0_IRQ_0
 
 namespace oneline {
-    enum Controller {
-        controller_1 = 0,
-        controller_2 = 1,
-        controller_3 = 2,
-        controller_4 = 3,
-        controller_invalid = -1
+    enum Port {
+        port_1 = 0,
+        port_2 = 1,
+        port_3 = 2,
+        port_4 = 3,
+        port_invalid = -1
     };
     
-    inline void set_handler(irq_handler_t handler) { 
-        irq_set_exclusive_handler(ONELINE_IRQ, handler); 
-    };
+    void set_handler(irq_handler_t handler);
     void init();
     
-    Controller get_controller();
-    int read_byte_blocking(Controller controller);
-    uint read_bytes_blocking(uint8_t *buffer, Controller controller, uint max, uint console_bytes);
-    void read_discard(Controller controller);
+    Port get_port();
+    int read_byte_blocking(Port port);
+    int read_bytes_blocking(uint8_t buffer[], Port port, int count, int console_bytes);
+    void read_discard(Port port);
     
-    void write_bytes(Controller controller, uint buffer[], uint bytes);
+    void write_bytes(Port port, uint buffer[], int bytes);
 }
