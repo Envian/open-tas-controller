@@ -16,12 +16,14 @@
 
 #include "global.h"
 
-#include <pico/time.h>
+#include <hardware/gpio.h>
 #include "n64.h"
 
 int main() {
     debug_init();
     stdio_init_all();
+    gpio_init(PICO_DEFAULT_LED_PIN);
+    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
     n64::record();
 
     while(true) {

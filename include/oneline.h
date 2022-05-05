@@ -20,9 +20,6 @@
 #include <hardware/pio.h>
 #include <hardware/irq.h>
 
-#define ONELINE_PIO pio0
-#define ONELINE_IRQ PIO0_IRQ_0
-
 namespace oneline {
     enum Port {
         port_1 = 0,
@@ -32,13 +29,15 @@ namespace oneline {
         port_invalid = -1
     };
     
-    void set_handler(irq_handler_t handler);
+    typedef void(*oneline_handler)(Port);
+    
+    void set_handler(oneline_handler handler);
     void init();
     
-    Port get_port();
     int read_byte_blocking(Port port);
     int read_bytes_blocking(uint8_t buffer[], Port port, int count, int console_bytes);
     void read_discard(Port port);
     
-    void write_bytes(Port port, uint8_t buffer[], int bytes);
+    void write_request(Port port, uint8_t buffer[], int bytes);
+    void write_reply(Port port, uint8_t buffer[], int bytes);
 }

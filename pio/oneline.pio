@@ -52,14 +52,14 @@
 
 .wrap_target
 start:
-    mov y x
+    mov y ! null
+    mov x ! null
 next_bit:
     push iffull
     wait 1 pin 0
     wait 0 pin 0        [(F_PIO_MHZ / 2) - 1]
     irq set 0 rel       [F_PIO_MHZ - 1]
-    jmp pin one_bit
-    nop                 [F_PIO_MHZ - 2]
+    jmp pin one_bit     [F_PIO_MHZ - 1]
     jmp pin reset_bit
 
 zero_bit:
@@ -76,25 +76,26 @@ public reset_bit:
     push
     jmp start
 
-
-public write:
+public write_request:
+    set x 0
+public write_reply:
     pull
     out y 32
 // Just a dec.
     jmp y-- write_loop
-
-// This jump happens when we try to write 0 bytes.
-    jmp start
     
+write_loop_return:
+    nop
 write_loop:
     pull ifempty
     set pindirs 1       [F_PIO_MHZ - 1]
     out pindirs 1       [(F_PIO_MHZ * 2) - 1]
-    set pindirs 0       [F_PIO_MHZ - 3]
-    jmp y-- write_loop  // This is the only jmp y-- we use as intended.
+    set pindirs 0       [F_PIO_MHZ - 4]
+    jmp y-- write_loop_return  // This is the only jmp y-- we use as intended.
     
-// Cleanup PIO state & Send end bit (2us low)
-    set pindirs 1       [(F_PIO_MHZ * 2) - 3]
+// Cleanup PIO state & Send end bit if x is not set to 0
     mov isr null
+    jmp x-- start
+    set pindirs 1       [(F_PIO_MHZ * 2) - 2]
     set pindirs 0
 .wrap

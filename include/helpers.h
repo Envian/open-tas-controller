@@ -17,7 +17,10 @@
 #pragma once
 #include "global.h"
 
-#define QUICK_SLEEP_US(t) { uint _t = time_us_32() + t; while(time_us_32() < _t); }
+#define QUICK_SLEEP_US(t) ({ uint _t = time_us_32() + t; while(time_us_32() < _t); })
+
+#define LED_ON() gpio_put(PICO_DEFAULT_LED_PIN, 1);
+#define LED_OFF() gpio_put(PICO_DEFAULT_LED_PIN, 0);
 
 void print_byte_hex(uint data);
 void print_short_hex(uint data);

@@ -23,27 +23,55 @@
 // REFERENCE: https://kthompson.gitlab.io/2016/07/26/n64-controller-protocol.html
 // Note: GCN Controller uses the same format, hence the shared code.
 
+#define ONELINE_PIO pio0
+#define ONELINE_IRQ PIO0_IRQ_0
+
+// In case, for whatever reason, we change this.
+#define GET_SM(p) (uint)p
+
 namespace oneline {
     uint pio_offset = 0;
+    oneline_handler port_event_handler = 0;
     
     // Shortcut Methods
-    inline bool can_read(Port port) { return !pio_sm_is_rx_fifo_empty(ONELINE_PIO, (uint)port); }
-    inline uint32_t read(Port port) { return pio_sm_get(ONELINE_PIO, (uint)port); }
-    inline bool can_write(Port port) { return !pio_sm_is_tx_fifo_full(ONELINE_PIO, (uint)port); }
-    inline void write(Port port, uint32_t data) { pio_sm_put(ONELINE_PIO, (uint)port, data); }
-    inline void write_blocking(Port port, uint32_t data) { pio_sm_put_blocking(ONELINE_PIO, (uint)port, data); }
+    inline bool can_read(Port port) { return !pio_sm_is_rx_fifo_empty(ONELINE_PIO, GET_SM(port)); }
+    inline uint32_t read(Port port) { return pio_sm_get(ONELINE_PIO, GET_SM(port)); }
+    inline bool can_write(Port port) { return !pio_sm_is_tx_fifo_full(ONELINE_PIO, GET_SM(port)); }
+    inline void write(Port port, uint32_t data) { pio_sm_put(ONELINE_PIO, GET_SM(port), data); }
+    inline void write_blocking(Port port, uint32_t data) { pio_sm_put_blocking(ONELINE_PIO, GET_SM(port), data); }
     inline void jump(Port port, uint offset) { pio_sm_exec(ONELINE_PIO, port, pio_encode_jmp(pio_offset + offset)); }
     inline void abort_read(Port port) { jump(port, oneline_offset_reset_bit); }
-    inline void begin_write(Port port, int bits) { write(port, bits); jump(port, oneline_offset_reset_bit); }
+    inline void begin_reply(Port port, int bits) { write(port, bits); jump(port, oneline_offset_write_reply); }
+    inline void begin_request(Port port, int bits) { write(port, bits); jump(port, oneline_offset_write_request); }
 
-    void set_handler(irq_handler_t handler) { 
-        irq_set_exclusive_handler(ONELINE_IRQ, handler); 
+    Port get_port() {
+        if (pio_interrupt_get(ONELINE_PIO, GET_SM(port_1))) { return port_1; }
+        if (pio_interrupt_get(ONELINE_PIO, GET_SM(port_2))) { return port_2; }
+        if (pio_interrupt_get(ONELINE_PIO, GET_SM(port_3))) { return port_3; }
+        if (pio_interrupt_get(ONELINE_PIO, GET_SM(port_4))) { return port_4; }
+        return port_invalid;
+    }
+
+    void handle_irq() {
+        Port port = get_port();
+        if (port != port_invalid) {
+            if (port_event_handler) {
+                LED_ON();
+                port_event_handler(port);
+                LED_OFF();
+            }
+            pio_interrupt_clear(ONELINE_PIO, port);
+        }
+    }
+
+    void set_handler(oneline_handler handler) { 
+        port_event_handler = handler;
     };
     
     void setup_port(Port port, uint pin) {
         pio_gpio_init(ONELINE_PIO, pin);
-        pio_sm_set_consecutive_pindirs(ONELINE_PIO, (uint)port, pin, 1, false);
-        pio_set_irq0_source_enabled(ONELINE_PIO, (pio_interrupt_source)(pis_interrupt0 + (uint)port), true);
+        pio_sm_set_consecutive_pindirs(ONELINE_PIO, GET_SM(port), pin, 1, false);
+        pio_set_irq0_source_enabled(ONELINE_PIO, (pio_interrupt_source)(pis_interrupt0 + GET_SM(port)), true);
         
         pio_sm_config reader_config = oneline_program_get_default_config(pio_offset);
         sm_config_set_clkdiv(&reader_config, (float)clock_get_hz(clk_sys) / (float)oneline_F_PIO);
@@ -56,28 +84,19 @@ namespace oneline {
         sm_config_set_in_shift(&reader_config, false /*shift right*/, false /*auto push*/, 8 /*push size*/);
         sm_config_set_out_shift(&reader_config, false /*shift left*/, false /*auto pull*/, 32 /*pull size*/);
         
-        pio_sm_init(ONELINE_PIO, (uint)port, pio_offset, &reader_config);
-        // Reader depends on X being defaulted to 0xFFFFFFFF
-        pio_sm_exec(ONELINE_PIO, (uint)port, pio_encode_mov_not(pio_x, pio_null));
-        pio_sm_set_enabled(ONELINE_PIO, (uint)port, true);
+        pio_sm_init(ONELINE_PIO, GET_SM(port), pio_offset, &reader_config);
+        pio_sm_set_enabled(ONELINE_PIO, GET_SM(port), true);
     }
     
     void init() {
         pio_offset = pio_add_program(ONELINE_PIO, &oneline_program);
         irq_set_enabled(ONELINE_IRQ, true);
+        irq_set_exclusive_handler(ONELINE_IRQ, handle_irq); 
         
         setup_port(port_1, ONELINE_PIN_PORT_1);
         setup_port(port_2, ONELINE_PIN_PORT_2);
         setup_port(port_3, ONELINE_PIN_PORT_3);
         setup_port(port_4, ONELINE_PIN_PORT_4);
-    }
-    
-    Port get_port() {
-        if (pio_interrupt_get(ONELINE_PIO, (uint)port_1)) { return port_1; }
-        if (pio_interrupt_get(ONELINE_PIO, (uint)port_2)) { return port_2; }
-        if (pio_interrupt_get(ONELINE_PIO, (uint)port_3)) { return port_3; }
-        if (pio_interrupt_get(ONELINE_PIO, (uint)port_4)) { return port_4; }
-        return port_invalid;
     }
     
     // --------------------
@@ -96,6 +115,7 @@ namespace oneline {
     }
     
     int __time_critical_func(read_bytes_blocking)(uint8_t buffer[], Port port, int count, int console_bytes) {
+        // TODO: Assert count > 0, and console_bytes <= count.
         int bytes = 0;
         uint last_activity = time_us_32();
         
@@ -109,7 +129,7 @@ namespace oneline {
                 if (data <= 0xFF) {
                     // Console bytes need to be rotated left 1 bit.
                     if (bytes >= console_bytes) { data <<= 1; }
-                    if (bytes > console_bytes) { buffer[bytes-1] |= (data >> 8) & 1; }
+                    if (bytes > console_bytes && bytes <= count) { buffer[bytes-1] |= (data >> 8) & 1; }
                     
                     // Dont write past the end of the array.
                     if (bytes < count) { buffer[bytes] = data; }
@@ -156,8 +176,6 @@ namespace oneline {
     // --------------------
     
     void __time_critical_func(write_bytes)(Port port, uint8_t buffer[], int count) {
-        begin_write(port, count * 8);
-        
         int bytes = 0;
         while (bytes < count) {
             // Load the 4 bytes into an int without reading past the end of the buffer.
@@ -169,5 +187,17 @@ namespace oneline {
             // Because we write pindirs with a pull up resistor, write the bits inverted
             write_blocking(port, ~data);
         }
+    }
+    
+    void __time_critical_func(write_request)(Port port, uint8_t buffer[], int count) {
+        // This differs from a reply in that it handsoff with a 1 bit.
+        begin_request(port, count * 8 + 1);
+        write_bytes(port, buffer, count);
+        write_blocking(port, ~(1 << 31));
+    }
+    
+    void __time_critical_func(write_reply)(Port port, uint8_t buffer[], int count) {
+        begin_reply(port, count * 8);
+        write_bytes(port, buffer, count);
     }
 }

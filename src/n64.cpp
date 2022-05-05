@@ -29,9 +29,8 @@ volatile n64::DataPacket input_buffer[BUFFER_SIZE];
 volatile uint packets = 0;
 
 namespace n64::core1 {
-    void handle_packet() {
+    void handle_packet(oneline::Port port) {
         uint timestamp = time_us_32();
-        oneline::Port port = oneline::get_port();
         int command = oneline::read_byte_blocking(port);
         
         uint console_bytes;
@@ -60,8 +59,7 @@ namespace n64::core1 {
     uint test_controller_type = 0x05000100;
     uint test_controller_response = 0;
     
-    void __time_critical_func(handle_packet_write_test)() {
-        oneline::Port port = oneline::get_port();
+    void handle_packet_write_test(oneline::Port port) {
         int command = oneline::read_byte_blocking(port);
         uint address;
 
@@ -71,10 +69,10 @@ namespace n64::core1 {
         switch (command) {
         case 0: // Setup Controller
         case 0xFF: // Reset Controller
-            oneline::write_bytes(port, (uint8_t*)&test_controller_type, 3);
+            oneline::write_reply(port, (uint8_t*)&test_controller_type, 3);
             break;
         case 1: // Read Inputs
-            oneline::write_bytes(port, (uint8_t*)&test_controller_response, 4);
+            oneline::write_reply(port, (uint8_t*)&test_controller_response, 4);
             break;
         case 2:
             address = oneline::read_byte_blocking(port);
@@ -85,14 +83,13 @@ namespace n64::core1 {
             oneline::read_discard(port);
             break;
         }
-        pio_interrupt_clear(ONELINE_PIO, port);
     }
     
     void record_init() {
         oneline::init();
-        oneline::set_handler(&handle_packet_write_test);
+        oneline::set_handler(&handle_packet);
         
-        // CPU1 needs to spin to keep things working right.
+        // if CPU1 doesn't spin, then 
         while (true) tight_loop_contents();
     }
 }
@@ -112,9 +109,9 @@ namespace n64 {
             putchar(',');
             putchar('0' + packet->source);
             putchar(',');
-            print_byte_hex(packet->command);
-            putchar(',');
             print_short_hex(packet->bits);
+            putchar(',');
+            print_byte_hex(packet->command);
             putchar(',');
             print_bytes_hex((uint8_t*)packet->data, packet->bits / 8);
             putchar('\n');
