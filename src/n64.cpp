@@ -23,8 +23,6 @@
 #include "helpers.h"
 #include "oneline.h"
 
-// REFERENCE: https://kthompson.gitlab.io/2016/07/26/n64-controller-protocol.html
-
 #define BUFFER_SIZE 8
 
 volatile n64::DataPacket input_buffer[BUFFER_SIZE];
@@ -73,10 +71,10 @@ namespace n64::core1 {
         switch (command) {
         case 0: // Setup Controller
         case 0xFF: // Reset Controller
-            oneline::write_bytes(port, &test_controller_type, 3);
+            oneline::write_bytes(port, (uint8_t*)&test_controller_type, 3);
             break;
         case 1: // Read Inputs
-            oneline::write_bytes(port, &test_controller_response, 4);
+            oneline::write_bytes(port, (uint8_t*)&test_controller_response, 4);
             break;
         case 2:
             address = oneline::read_byte_blocking(port);

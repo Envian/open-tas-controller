@@ -1,0 +1,13 @@
+{
+  "configurations": [
+    {
+      "name": "Release",
+      "generator": "Unix Makefiles",
+      "configurationType" : "Release",
+      "buildRoot":  "${TMPDIR}/open-tas-controller-build/",
+      "cmakeCommandArgs":  "",
+      "buildCommandArgs": "",
+      "ctestCommandArgs":  ""
+    }
+  ]
+}

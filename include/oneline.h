@@ -40,5 +40,5 @@ namespace oneline {
     int read_bytes_blocking(uint8_t buffer[], Port port, int count, int console_bytes);
     void read_discard(Port port);
     
-    void write_bytes(Port port, uint buffer[], int bytes);
+    void write_bytes(Port port, uint8_t buffer[], int bytes);
 }

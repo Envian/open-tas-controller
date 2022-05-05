@@ -5,3 +5,4 @@ pio.h/
 include/pico
 .gcc-flags.json
 .clang_complete
+build/
