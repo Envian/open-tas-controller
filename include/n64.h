@@ -16,15 +16,16 @@
 
 #pragma once
 #include "global.h"
+#include "oneline.h"
 
 #define DATA_PACKET_BUFFER 36
 
 namespace n64 {
     struct DataPacket {
         uint timestamp;
-        uint source;
-        uint command;
-        uint bits;
+        oneline::Port source;
+        int command;
+        int bits;
         uint8_t data[DATA_PACKET_BUFFER];
     };
 

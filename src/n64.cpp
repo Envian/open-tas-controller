@@ -48,11 +48,11 @@ namespace n64::core1 {
         }
         
         volatile DataPacket *packet = &input_buffer[packets % BUFFER_SIZE];
-        uint bits = oneline::read_bytes_blocking((uint8_t*)packet->data, port, DATA_PACKET_BUFFER, console_bytes);
+        int bits = oneline::read_bytes_blocking((uint8_t*)packet->data, port, DATA_PACKET_BUFFER, console_bytes);
         packet->timestamp = timestamp;
         packet->source = port;
         packet->command = command;
-        packet->bits = bits - 9; // The command & handover bits are counted.
+        packet->bits = bits - 9;
         packets++;
     }
     
@@ -89,7 +89,7 @@ namespace n64::core1 {
         oneline::init();
         oneline::set_handler(&handle_packet);
         
-        // if CPU1 doesn't spin, then 
+        // if CPU1 doesn't spin, then time_us_32 does not work.
         while (true) tight_loop_contents();
     }
 }
@@ -99,21 +99,21 @@ namespace n64 {
         multicore_launch_core1(&core1::record_init);
         
         uint printed_packets = 0;
-        uint current_packet = 0;
         
         while (true) {
             while (printed_packets == packets);
             
             volatile DataPacket *packet = &input_buffer[printed_packets % BUFFER_SIZE];
+            
             print_int_hex(packet->timestamp);
             putchar(',');
-            putchar('0' + packet->source);
+            putchar('0' + (uint8_t)packet->source);
             putchar(',');
             print_short_hex(packet->bits);
             putchar(',');
             print_byte_hex(packet->command);
             putchar(',');
-            print_bytes_hex((uint8_t*)packet->data, packet->bits / 8);
+            print_bytes_hex((uint8_t*)packet->data, MIN(packet->bits / 8, 35));
             putchar('\n');
             printed_packets++;
         }

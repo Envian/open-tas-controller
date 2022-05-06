@@ -41,8 +41,8 @@ void print_int_hex(uint data) {
     print_short_hex(data);
 }
 
-void print_bytes_hex(uint8_t data[], uint count) {
-    for (uint n = 0; n < count; n++) {
+void print_bytes_hex(uint8_t data[], int count) {
+    for (int n = 0; n < count; n++) {
         print_byte_hex(data[n]);
     }
 }

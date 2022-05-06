@@ -16,15 +16,14 @@
 
 #pragma once
 
-#define ERROR(message) static_assert(false, message);
-
 #include <stdio.h>
 #include "helpers.h"
 #include "hardware/gpio.h"
 
-#define TEMP_PUT(a) putchar(a); putchar('\n');
-#define TEMP_PRINT_VAR(val) print(#val ": "); print_int_hex(val); putchar('\n');
-#define TEMP_PIN_ON() gpio_put(15, 1);
-#define TEMP_PIN_OFF() gpio_put(15, 0);
+#define DEBUG_PIN 15
+#define DEBUG_PUT(a) putchar(a); putchar('\n');
+#define DEBUG_PRINT_VAR(val) print(#val ": "); print_int_hex(val); putchar('\n');
+#define DEBUG_PIN_ON() gpio_put(DEBUG_PIN, 1);
+#define DEBUG_PIN_OFF() gpio_put(DEBUG_PIN, 0);
 
 void debug_init();

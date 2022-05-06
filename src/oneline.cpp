@@ -118,34 +118,33 @@ namespace oneline {
         // TODO: Assert count > 0, and console_bytes <= count.
         int bytes = 0;
         uint last_activity = time_us_32();
+        uint32_t last_read;
         
         // Step 1: Read all data from pio.
         while(true) {
             if (can_read(port)) {
                 uint32_t data = read(port);
+                last_activity = time_us_32();
                 
                 // Values higher than 255 represent the end of a command.
                 // This is a bit-inverted counter of how many bits were read.
                 if (data <= 0xFF) {
-                    // Console bytes need to be rotated left 1 bit.
+                    // controller bytes need to be rotated left 1 bit.
                     if (bytes >= console_bytes) { data <<= 1; }
                     if (bytes > console_bytes && bytes <= count) { buffer[bytes-1] |= (data >> 8) & 1; }
                     
                     // Dont write past the end of the array.
                     if (bytes < count) { buffer[bytes] = data; }
+                    last_read = data;
                     bytes++;
                 } else {
-                    // If the buffer is filled, dont bother with correction.
-                    if (bytes >= count) {
-                        return ~data;
-                    }
+                    // We need to reprocess the last byte
+                    bytes--;
+                    last_read <<= (8 - (~data % 8)) % 8;
                     
-                    // data is now the number of bits read. 
-                    uint32_t corrected_byte = buffer[bytes] << (8 - (~data % 8)) % 8;
-                    buffer[bytes] = corrected_byte;
+                    if (bytes > console_bytes && bytes <= count) { buffer[bytes-1] |= (last_read >> 8) & 1; }
+                    if (bytes < count) { buffer[bytes] = last_read; }
                     
-                    // Console rotation correction for the last byte if necessary.
-                    if (bytes > console_bytes) { buffer[bytes-1] |= (corrected_byte >> 8) & 1; }
                     return ~data;
                 }
             } else if (TIMED_OUT(last_activity, ONELINE_READ_TIMEOUT_US)) {

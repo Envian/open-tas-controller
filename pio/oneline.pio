@@ -71,7 +71,7 @@ one_bit:
     jmp y-- next_bit
     
 public reset_bit:
-    push noblock
+    push
     in y 32
     push
     jmp start
@@ -89,13 +89,15 @@ write_loop_return:
 write_loop:
     pull ifempty
     set pindirs 1       [F_PIO_MHZ - 1]
-    out pindirs 1       [(F_PIO_MHZ * 2) - 1]
+    out pindirs 1       [F_PIO_MHZ - 1]
+    nop                 [F_PIO_MHZ - 1]
     set pindirs 0       [F_PIO_MHZ - 4]
     jmp y-- write_loop_return  // This is the only jmp y-- we use as intended.
     
 // Cleanup PIO state & Send end bit if x is not set to 0
     mov isr null
     jmp x-- start
-    set pindirs 1       [(F_PIO_MHZ * 2) - 2]
+    set pindirs 1       [F_PIO_MHZ - 1]
+    nop                 [F_PIO_MHZ - 1]
     set pindirs 0
 .wrap

@@ -17,7 +17,7 @@
 #include "debug.h"
 
 void debug_init() {
-    gpio_init(15);
-    gpio_set_dir(15, GPIO_OUT);
-    TEMP_PIN_ON();
+    gpio_init(DEBUG_PIN);
+    gpio_set_dir(DEBUG_PIN, GPIO_OUT);
+    DEBUG_PIN_ON();
 }

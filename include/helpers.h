@@ -25,6 +25,6 @@
 void print_byte_hex(uint data);
 void print_short_hex(uint data);
 void print_int_hex(uint data);
-void print_bytes_hex(uint8_t data[], uint count);
+void print_bytes_hex(uint8_t data[], int count);
 
 void print(char *string);
