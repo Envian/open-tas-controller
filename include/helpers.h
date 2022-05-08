@@ -5,7 +5,7 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -17,8 +17,6 @@
 #pragma once
 #include "global.h"
 
-#define QUICK_SLEEP_US(t) ({ uint _t = time_us_32() + t; while(time_us_32() < _t); })
-
 #define LED_ON() gpio_put(PICO_DEFAULT_LED_PIN, 1);
 #define LED_OFF() gpio_put(PICO_DEFAULT_LED_PIN, 0);
 
@@ -28,3 +26,5 @@ void print_int_hex(uint data);
 void print_bytes_hex(uint8_t data[], int count);
 
 void print(char *string);
+
+void fast_wait_us(uint duration);

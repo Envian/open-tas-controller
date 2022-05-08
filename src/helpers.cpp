@@ -5,7 +5,7 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -41,15 +41,20 @@ void print_int_hex(uint data) {
     print_short_hex(data);
 }
 
-void print_bytes_hex(uint8_t data[], int count) {
+void print_bytes_hex(const uint8_t data[], int count) {
     for (int n = 0; n < count; n++) {
         print_byte_hex(data[n]);
     }
 }
 
-void print(char *string) {
+void print(const char *string) {
     while (*string) {
         putchar(*string);
         string++;
     }
+}
+
+void fast_wait_us(uint duration) {
+    uint start = time_us_32();
+    while (time_us_32() - start < duration);
 }

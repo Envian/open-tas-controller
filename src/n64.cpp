@@ -5,7 +5,7 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -22,17 +22,28 @@
 
 #include "helpers.h"
 #include "oneline.h"
+#include "loop_queue.h"
 
 #define BUFFER_SIZE 8
 
-volatile n64::DataPacket input_buffer[BUFFER_SIZE];
-volatile uint packets = 0;
+n64::DataPacket input_buffer[BUFFER_SIZE];
+uint packets = 0;
+
+uint32_t controller_id[4];
+uint8_t controller_id_buffers[4*3] = {
+    0x05, 0x00, 0x02,
+    0x05, 0x00, 0x02,
+    0x05, 0x00, 0x02,
+    0x05, 0x00, 0x02,
+};
+
+LoopQueue<uint8_t, 128> datastream = LoopQueue<uint8_t, 128>();
 
 namespace n64::core1 {
     void handle_packet(oneline::Port port) {
         uint timestamp = time_us_32();
         int command = oneline::read_byte_blocking(port);
-        
+
         uint console_bytes;
         switch (command) {
         case -1:
@@ -46,8 +57,8 @@ namespace n64::core1 {
         default:
             console_bytes = 0;
         }
-        
-        volatile DataPacket *packet = &input_buffer[packets % BUFFER_SIZE];
+
+        DataPacket *packet = &input_buffer[packets % BUFFER_SIZE];
         int bits = oneline::read_bytes_blocking((uint8_t*)packet->data, port, DATA_PACKET_BUFFER, console_bytes);
         packet->timestamp = timestamp;
         packet->source = port;
@@ -55,28 +66,48 @@ namespace n64::core1 {
         packet->bits = bits - 9;
         packets++;
     }
-    
-    uint test_controller_type = 0x05000100;
-    uint test_controller_response = 0;
-    
-    void handle_packet_write_test(oneline::Port port) {
-        int command = oneline::read_byte_blocking(port);
-        uint address;
 
-        uint timeout = time_us_32();
-        while (!TIMED_OUT(timeout, 5));
-        
+    void handler_datastream(oneline::Port port) {
+        // uint32_t identifier = controller_id[(uint)port];
+        // if (!identifier) {
+        //     return oneline::read_discard(port);
+        // }
+
+        int command = oneline::read_byte_blocking(port);
+        oneline::Writer writer(port);
+
         switch (command) {
-        case 0: // Setup Controller
+        case 0: // Identify Controller
         case 0xFF: // Reset Controller
-            oneline::write_reply(port, (uint8_t*)&test_controller_type, 3);
+            fast_wait_us(5);
+            writer.begin_reply(3);
+            writer.write(&controller_id_buffers[port * 3]);
             break;
         case 1: // Read Inputs
-            oneline::write_reply(port, (uint8_t*)&test_controller_response, 4);
+            fast_wait_us(5);
+            writer.begin_reply(4);
+            writer.write(datastream.get());
+            writer.write(datastream.get());
+            writer.write(datastream.get());
+            writer.write(datastream.get());
             break;
         case 2:
-            address = oneline::read_byte_blocking(port);
-            address = (address << 8) | oneline::read_byte_blocking(port);
+            oneline::read_byte_blocking(port);
+            oneline::read_byte_blocking(port);
+            fast_wait_us(6);
+            writer.begin_reply(33);
+            for (uint n = 0; n < 33; n++) {
+                writer.write(datastream.get());
+            }
+            break;
+        case 3:
+            for (int x = 0; x < 34; x++) {
+                oneline::read_byte_blocking(port);
+            }
+
+            fast_wait_us(6);
+            writer.begin_reply(1);
+            writer.write_zeros();
             break;
         default:
             // Unknown commands: Discard all the data
@@ -84,38 +115,20 @@ namespace n64::core1 {
             break;
         }
     }
-    
-    void record_init() {
+
+    void datastream_init() {
         oneline::init();
-        oneline::set_handler(&handle_packet);
-        
+        oneline::set_handler(&handler_datastream);
+
         // if CPU1 doesn't spin, then time_us_32 does not work.
         while (true) tight_loop_contents();
     }
 }
 
 namespace n64 {
-    void record() {
-        multicore_launch_core1(&core1::record_init);
-        
-        uint printed_packets = 0;
-        
-        while (true) {
-            while (printed_packets == packets);
-            
-            volatile DataPacket *packet = &input_buffer[printed_packets % BUFFER_SIZE];
-            
-            print_int_hex(packet->timestamp);
-            putchar(',');
-            putchar('0' + (uint8_t)packet->source);
-            putchar(',');
-            print_short_hex(packet->bits);
-            putchar(',');
-            print_byte_hex(packet->command);
-            putchar(',');
-            print_bytes_hex((uint8_t*)packet->data, MIN(packet->bits / 8, 35));
-            putchar('\n');
-            printed_packets++;
-        }
+    void playback_datastream() {
+        multicore_launch_core1(&core1::datastream_init);
+
+
     }
 }

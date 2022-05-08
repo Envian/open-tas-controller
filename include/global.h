@@ -5,7 +5,7 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -20,3 +20,4 @@
 #include "debug.h"
 
 #define TIMED_OUT(start, duration) (time_us_32() - start >= duration)
+#define ENTRIES(arr) ({ static_assert(count_of(arr) > 0, "ENTRIES must be a fixed sized array."); count_of(arr); })

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build) 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build)
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
@@ -20,7 +20,7 @@ include_directories(./include ./pio)
 add_executable(open-tas-controller ${SRC_FILES})
 pico_generate_pio_header(open-tas-controller ${PIO_FILES})
 
-target_link_libraries(open-tas-controller 
+target_link_libraries(open-tas-controller
     pico_stdlib
     pico_multicore
     hardware_pio
@@ -29,3 +29,9 @@ target_link_libraries(open-tas-controller
 pico_add_extra_outputs(open-tas-controller)
 pico_enable_stdio_usb(open-tas-controller 1)
 pico_enable_stdio_uart(open-tas-controller 0)
+
+add_custom_command(TARGET open-tas-controller POST_BUILD
+    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/upload.sh"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/open-tas-controller.uf2"
+)

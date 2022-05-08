@@ -5,7 +5,7 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -21,6 +21,7 @@
 #include <hardware/irq.h>
 
 namespace oneline {
+    // Note: Many features depend on port 1 being 0 for array indexing & pio.
     enum Port {
         port_1 = 0,
         port_2 = 1,
@@ -28,16 +29,31 @@ namespace oneline {
         port_4 = 3,
         port_invalid = -1
     };
-    
+
     typedef void(*oneline_handler)(Port);
-    
+
     void set_handler(oneline_handler handler);
     void init();
-    
+
     int read_byte_blocking(Port port);
     int read_bytes_blocking(uint8_t buffer[], Port port, int count, int console_bytes);
     void read_discard(Port port);
-    
-    void write_request(Port port, uint8_t buffer[], int bytes);
-    void write_reply(Port port, uint8_t buffer[], int bytes);
+
+    // void write_request(Port port, const uint8_t buffer[], int bytes);
+    // void write_reply(Port port, const uint8_t buffer[], int bytes);
+
+    class Writer {
+    private:
+        Port port;
+        uint count;
+        uint written;
+        uint32_t data;
+    public:
+        Writer(Port port);
+        void begin_request(uint bytes);
+        void begin_reply(uint bytes);
+        void write(uint8_t data);
+        void write(uint8_t* buffer);
+        void write_zeros();
+    };
 }
