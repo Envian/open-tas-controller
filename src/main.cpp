@@ -17,7 +17,7 @@
 #include "global.h"
 
 #include <hardware/gpio.h>
-#include "n64.h"
+#include "nintendo/n64.h"
 
 int main() {
     debug_init();

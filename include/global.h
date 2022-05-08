@@ -18,6 +18,7 @@
 #include <pico/stdlib.h>
 #include "config.h"
 #include "debug.h"
+#include "helpers.h"
 
 #define TIMED_OUT(start, duration) (time_us_32() - start >= duration)
 #define ENTRIES(arr) ({ static_assert(count_of(arr) > 0, "ENTRIES must be a fixed sized array."); count_of(arr); })

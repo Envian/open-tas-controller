@@ -14,14 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include "n64.h"
+#include "nintendo/n64.h"
 
 #include <stdio.h>
 #include <pico/multicore.h>
 #include <hardware/irq.h>
 
-#include "helpers.h"
-#include "oneline.h"
+#include "nintendo/oneline.h"
 #include "loop_queue.h"
 
 #define BUFFER_SIZE 8

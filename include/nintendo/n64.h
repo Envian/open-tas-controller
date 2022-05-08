@@ -16,7 +16,7 @@
 
 #pragma once
 #include "global.h"
-#include "oneline.h"
+#include "nintendo/oneline.h"
 
 #define DATA_PACKET_BUFFER 36
 
