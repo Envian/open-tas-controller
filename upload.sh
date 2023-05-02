@@ -1,5 +1,4 @@
 #!/bin/bash
-BUILD_DIR=/tmp/open-tas-controller-build
 
 # thanks to https://github.com/ConorShore/RPi_Pico_Autoloader
 # for the framework for this section
@@ -15,4 +14,4 @@ while [ -z "$PICO_FOLDER" ] || [ ! -d "$PICO_FOLDER" ]; do
 done
 
 echo "pico found: $PICO_FOLDER"
-cp "$BUILD_DIR/open-tas-controller.uf2" "$PICO_FOLDER"
+cp "build/open-tas-controller.uf2" "$PICO_FOLDER"

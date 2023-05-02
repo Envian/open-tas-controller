@@ -1,0 +1,6 @@
+CompileFlags:
+  Add:
+    - "-I/usr/arm-none-eabi/include/c++/13.1.0/"
+    - "-I/usr/arm-none-eabi/include/c++/13.1.0/arm-none-eabi/thumb/v6-m/nofp/"
+    - "-I/usr/arm-none-eabi/include/"
+    - "-I/usr/share/pico-sdk/src/common/pico_base/include/pico"
