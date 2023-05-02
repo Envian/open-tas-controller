@@ -14,4 +14,4 @@ while [ -z "$PICO_FOLDER" ] || [ ! -d "$PICO_FOLDER" ]; do
 done
 
 echo "pico found: $PICO_FOLDER"
-cp "build/open-tas-controller.uf2" "$PICO_FOLDER"
+cp "$1/open-tas-controller.uf2" "$PICO_FOLDER"

@@ -17,7 +17,6 @@
 #include "helpers.h"
 
 #include <pico/stdlib.h>
-#include <stdio.h>
 
 char NIBLE_CHARACTER_MAPPING[] = {
     '0', '1', '2', '3',
@@ -25,34 +24,6 @@ char NIBLE_CHARACTER_MAPPING[] = {
     '8', '9', 'A', 'B',
     'C', 'D', 'E', 'F'
 };
-
-void print_byte_hex(uint data) {
-    putchar(NIBLE_CHARACTER_MAPPING[(data >> 4) & 0xF]);
-    putchar(NIBLE_CHARACTER_MAPPING[data & 0xF]);
-}
-
-void print_short_hex(uint data) {
-    print_byte_hex(data >> 8);
-    print_byte_hex(data);
-}
-
-void print_int_hex(uint data) {
-    print_short_hex(data >> 16);
-    print_short_hex(data);
-}
-
-void print_bytes_hex(const uint8_t data[], int count) {
-    for (int n = 0; n < count; n++) {
-        print_byte_hex(data[n]);
-    }
-}
-
-void print(const char *string) {
-    while (*string) {
-        putchar(*string);
-        string++;
-    }
-}
 
 void fast_wait_us(uint duration) {
     uint start = time_us_32();

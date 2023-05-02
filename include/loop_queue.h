@@ -20,14 +20,17 @@ template <typename T, int SIZE>
 class LoopQueue {
 private:
     T buffer[SIZE];
-    uint rptr;
-    uint wptr;
+    volatile uint rptr;
+    volatile uint wptr;
+    bool overflow, underflow;
 public:
     LoopQueue() {
-        wptr = 0;
-        rptr = 0;
+        clear();
     }
     T get() {
+        if (wptr == rptr) {
+            underflow = true;
+        }
         T value = buffer[rptr];
         rptr = (rptr + 1) % SIZE;
         return value;
@@ -35,11 +38,23 @@ public:
     void add(T value) {
         buffer[wptr] = value;
         wptr = (wptr + 1) % SIZE;
+        if (wptr == rptr) {
+            overflow = true;
+        }
     }
     uint gets_avaiable() {
         return (wptr < rptr) ? (wptr - rptr + SIZE) : (wptr - rptr);
     }
     uint adds_available() {
-        return (rptr <= wptr) ? (rptr - wptr + SIZE) : (rptr - wptr);
+        return ((rptr <= wptr) ? (rptr - wptr + SIZE) : (rptr - wptr)) - 1;
+    }
+    void clear() {
+        wptr = 0;
+        rptr = 0;
+        underflow = false;
+        overflow = false;
+        for (uint x = 0; x < sizeof(buffer); x++) {
+            *((uint8_t*)buffer + x) = 0;
+        }
     }
 };

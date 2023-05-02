@@ -31,8 +31,16 @@ pico_add_extra_outputs(open-tas-controller)
 pico_enable_stdio_usb(open-tas-controller 1)
 pico_enable_stdio_uart(open-tas-controller 0)
 
+add_custom_command(TARGET open-tas-controller POST_BUILD
+    COMMAND "picotool" "load" "-fx" "open-tas-controller.uf2"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/open-tas-controller.uf2"
+)
+
+
 # Currently does not output the message asking the user to put pico into USB mode.
 # Until I can print a message here sucessfully, it looks like a hang.
+
 
 # add_custom_command(TARGET open-tas-controller POST_BUILD
 #     COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/upload.sh" ${CMAKE_CURRENT_BINARY_DIR}

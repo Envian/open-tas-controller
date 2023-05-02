@@ -20,14 +20,6 @@
 
 #define DATA_PACKET_BUFFER 36
 
-namespace n64 {
-    struct DataPacket {
-        uint timestamp;
-        oneline::Port source;
-        int command;
-        int bits;
-        uint8_t data[DATA_PACKET_BUFFER];
-    };
-
-    void playback_datastream();
+namespace n64::datastream {
+    void playback();
 }

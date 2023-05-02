@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <stdio.h>
 #include "helpers.h"
 #include "hardware/gpio.h"
 

@@ -1,4 +1,3 @@
-// Open TAS Controller - Connects to game consoles via a Raspberry Pi Pico
 // Copyright (C) 2022  Russell Small
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,13 +13,24 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#pragma once
-#define PICO_STDIO_ENABLE_CRLF_SUPPORT 0
+#include <stdio.h>
+#include "io.h"
 
-#include <pico/stdlib.h>
-#include "config.h"
-#include "debug.h"
-#include "helpers.h"
-
-
-#define TIMED_OUT(start, duration) (time_us_32() - start >= duration)
+namespace io {
+    void write_blocking(uint8_t data) {
+        putchar_raw(data);
+    }
+    
+    uint8_t read_blocking() {
+        int data;
+        do {
+            data = getchar_timeout_us(100);
+        } while (data == PICO_ERROR_TIMEOUT);
+        
+        return data;
+    }
+    
+    void flush() {
+        stdio_flush();
+    }
+}

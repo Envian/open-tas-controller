@@ -17,16 +17,16 @@
 #include "global.h"
 
 #include <hardware/gpio.h>
-#include "nintendo/n64.h"
+#include "nintendo/n64_datastream.h"
 
 int main() {
     debug_init();
-    stdio_init_all();
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
-    n64::playback_datastream();
+    n64::datastream::playback();
 
     while(true) {
+        // This loop will not currently be hit
 
     }
 }
