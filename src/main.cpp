@@ -16,17 +16,34 @@
 
 #include "global.h"
 
-#include <hardware/gpio.h>
+#include "base_device.h"
 #include "nintendo/n64_datastream.h"
 
+#include "io.h"
+
+#include <hardware/gpio.h>
+
 int main() {
-    debug_init();
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
-    n64::datastream::playback();
+
+    stdio_init_all();
+    
+    // Wait for a single byte before starting.
+    io::read_blocking();
+
+    currentDevice = new n64::n64_Datastream();
 
     while(true) {
-        // This loop will not currently be hit
+        uint8_t command = io::read_blocking();
 
+        switch (command) {
+        case 0x80:
+            currentDevice->handle_datastream();
+            break;
+        case 0x81:
+            currentDevice->handle_controller_config();
+            break;
+        }
     }
 }

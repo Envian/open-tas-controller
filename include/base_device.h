@@ -1,4 +1,3 @@
-// Open TAS Controller - Connects to game consoles via a Raspberry Pi Pico
 // Copyright (C) 2022  Russell Small
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,10 +13,18 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-// #include "debug.h"
+#pragma once
+#include "global.h"
 
-// void debug_init() {
-//     gpio_init(DEBUG_PIN);
-//     gpio_set_dir(DEBUG_PIN, GPIO_OUT);
-//     DEBUG_PIN_ON();
-// }
+class BaseDevice {
+public:
+    BaseDevice();
+    virtual ~BaseDevice();
+
+    // Handlers the state - false for success, non zero for error.
+    virtual bool handle_datastream();
+    virtual bool handle_controller_config();
+    virtual bool is_oneline() const;
+};
+
+extern BaseDevice *currentDevice;

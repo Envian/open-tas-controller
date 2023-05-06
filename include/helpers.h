@@ -20,11 +20,4 @@
 #define LED_ON() gpio_put(PICO_DEFAULT_LED_PIN, 1);
 #define LED_OFF() gpio_put(PICO_DEFAULT_LED_PIN, 0);
 
-void print_byte_hex(uint data);
-void print_short_hex(uint data);
-void print_int_hex(uint data);
-void print_bytes_hex(uint8_t data[], int count);
-
-void print(char *string);
-
 void fast_wait_us(uint duration);

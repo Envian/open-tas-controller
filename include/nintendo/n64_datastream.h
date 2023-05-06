@@ -16,10 +16,25 @@
 
 #pragma once
 #include "global.h"
+#include "nintendo/models.h"
+
 #include "nintendo/oneline.h"
+#include "loop_queue.h"
 
-#define DATA_PACKET_BUFFER 36
+#define DATASTREAM_BUFFER_SIZE 64
+#define N64_CONTROLLER_COUNT 4
 
-namespace n64::datastream {
-    void playback();
+namespace n64 {
+    class n64_Datastream : public oneline::OnelineDevice {
+    public:
+        n64_Datastream();
+        ~n64_Datastream();
+        bool handle_datastream();
+        bool handle_controller_config();
+        void handle_oneline(oneline::Port port);
+        void core1_loop();
+    private:
+        ControllerConfig controllers[N64_CONTROLLER_COUNT];
+        LoopQueue<uint8_t, DATASTREAM_BUFFER_SIZE, 0> databuffer;
+    };
 }

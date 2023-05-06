@@ -20,18 +20,7 @@
 #include <hardware/irq.h>
 
 #include "nintendo/oneline.h"
-#include "loop_queue.h"
 #include "io.h"
-
-#define BUFFER_SIZE 128
-#define MAX_REQUEST 1
-
-struct State {
-    LoopQueue<volatile uint8_t, BUFFER_SIZE> buffer = LoopQueue<volatile uint8_t, BUFFER_SIZE>();
-    uint8_t controllers[4*3] = {};
-};
-
-State *state;
 
 namespace n64::datastream::core1 {
     // void handle_packet(oneline::Port port) {
@@ -60,10 +49,63 @@ namespace n64::datastream::core1 {
     //     packet->bits = bits - 9;
     //     packets++;
     // }
+}
 
-    void handler_datastream(oneline::Port port) {
-        uint32_t identifier = state->controllers[(port * 3) + 2];
-        if (!identifier) {
+namespace n64 {
+    volatile uint dataRequested = 0;
+
+    void core1_init() {
+        // Sure hope this is always an n64 datastream reference...
+        ((n64_Datastream*)currentDevice)->core1_loop();
+    }
+
+    n64_Datastream::n64_Datastream() {
+        // Clear out controller headers
+        for (uint x = 0; x < N64_CONTROLLER_COUNT; x++) {
+            controllers[x].connected = false;
+            for (uint y = 0; y < sizeof(controllers[x].header); y++) {
+                controllers[x].header[y] = 0;
+            }
+        }
+
+        // FIXME
+        multicore_launch_core1(core1_init);
+    }
+
+
+    n64_Datastream::~n64_Datastream() {
+        // TODO: Deconstructor
+    }
+
+    // Datastream format:
+    // 1 byte - size of buffer
+    // n bytes - Data to send to the datastream.
+    bool n64_Datastream::handle_datastream() {
+        uint count = io::read_blocking();
+        for (uint x = 0; x < count; x++) {
+            this->databuffer.add(io::read_blocking());
+        }
+        dataRequested -= count;
+        return true;
+    }
+
+    // Controller Config Protocol:
+    // 4x of the following:
+    //   1 byte  - controller info (0 disconnected)
+    //   3 bytes - controller header
+    bool n64_Datastream::handle_controller_config() {
+        for (uint x = 0; x < N64_CONTROLLER_COUNT; x++) {
+            this->controllers[x].connected = !!io::read_blocking();
+            for (uint n = 0; n < sizeof(this->controllers[x].header); n++) {
+                this->controllers[x].header[n] = io::read_blocking();
+            }
+        }
+        return true;
+    }
+
+    void n64_Datastream::handle_oneline(oneline::Port port) {
+        ControllerConfig *controller = &controllers[port];
+        if (!controller->connected) {
             return oneline::read_discard(port);
         }
 
@@ -76,15 +118,15 @@ namespace n64::datastream::core1 {
         case 0xFF: // Reset Controller
             fast_wait_us(5);
             writer.begin_reply(3);
-            writer.write(&state->controllers[port * 3]);
+            writer.write(&controller->header[port * 3]);
             break;
         case 1: // Read Inputs
             fast_wait_us(5);
             writer.begin_reply(4);
-            writer.write(state->buffer.get());
-            writer.write(state->buffer.get());
-            writer.write(state->buffer.get());
-            writer.write(state->buffer.get());
+            writer.write(this->databuffer.get());
+            writer.write(this->databuffer.get());
+            writer.write(this->databuffer.get());
+            writer.write(this->databuffer.get());
             break;
         // case 2:
         //     oneline::read_byte_blocking(port);
@@ -111,47 +153,14 @@ namespace n64::datastream::core1 {
         }
     }
 
-    void datastream_init() {
+    void n64_Datastream::core1_loop() {
         oneline::init();
-        oneline::set_handler(&handler_datastream);
-    }
-}
-
-namespace n64::datastream {
-    void playback() {
-        state = new State();
-        stdio_init_all();
-
-        for (uint x = 0; x < 12; x++) {
-            state->controllers[x] = io::read_blocking();
-        }
-
-        io::write_blocking('t');
-        io::write_blocking('h');
-        io::write_blocking('a');
-        io::write_blocking('n');
-        io::write_blocking('k');
-        io::write_blocking('s');
-        io::write_blocking('\n');
-
-        // multicore_launch_core1(&core1::datastream_init);
-        core1::datastream_init();
-        
-        
         while (true) {
-            while (state->buffer.adds_available() == 0) { tight_loop_contents(); }
-            
-            // Tell PC how many bytes it can handle
-            io::write_blocking(MIN(state->buffer.adds_available(), MAX_REQUEST));
-            //io::flush();
-
-
-            // PC responds with the number of bytes, and streams them all.
-            uint count = io::read_blocking();
-            for (uint x = 0; x < count; x++) {
-                // Double ensure we don't overflow
-                while (state->buffer.adds_available() == 0) { tight_loop_contents(); }
-                state->buffer.add(io::read_blocking());
+            int count = this->databuffer.adds_available() - dataRequested;
+            if (count > 0) {
+                io::write_blocking(0x80);
+                io::write_blocking(count);
+                dataRequested += count;
             }
         }
     }

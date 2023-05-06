@@ -17,6 +17,8 @@
 #pragma once
 #include "global.h"
 
+#include "base_device.h"
+
 #include <hardware/pio.h>
 #include <hardware/irq.h>
 
@@ -30,9 +32,12 @@ namespace oneline {
         port_invalid = -1
     };
 
-    typedef void(*oneline_handler)(Port);
+    class OnelineDevice : public BaseDevice {
+    public:
+        virtual void handle_oneline(Port port);
+        virtual bool is_oneline() const;
+    };
 
-    void set_handler(oneline_handler handler);
     void init();
 
     int read_byte_blocking(Port port);

@@ -14,10 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-// #include "debug.h"
+#pragma once
+#include "global.h"
 
-// void debug_init() {
-//     gpio_init(DEBUG_PIN);
-//     gpio_set_dir(DEBUG_PIN, GPIO_OUT);
-//     DEBUG_PIN_ON();
-// }
+namespace n64 {
+    struct ControllerConfig {
+        bool connected;
+        uint8_t header[3];
+    };
+}

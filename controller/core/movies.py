@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from math import floor
+
 class Movie:
 	def __init__(self, system, game, controllers, author, description):
 		self.system = system
@@ -50,24 +52,29 @@ class N64Movie(Movie):
 		#connection.write("n64".encode()) # Nintendo 64
 		#connection.write(bytearray([self.controllers]))
 		#connection.write(bytearray([0x81, 0x04])) # Temp - Set Controller packet size.
-		connection.write(bytearray([0x05, 0x00, 0x02, 0x00, 0x00, 0x00, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0])) # Temp - Configure controller 1
-		print(connection.read_until(b"\n"))
+		connection.write(bytearray([0x00])) #Connected byte (temp)
+		connection.write(bytearray([0x81])) #Controller Config Raw Cmd
+		connection.write(bytearray([0x01, 0x05, 0x00, 0x02]))
+		connection.write(bytearray([0x00, 0x00, 0x00, 0x00]))
+		connection.write(bytearray([0x00, 0x00, 0x00, 0x00]))
+		connection.write(bytearray([0x00, 0x00, 0x00, 0x00]))
 
 		frame = 0
 		while True:
-			fcount = connection.read(1)[0]
-			if fcount == 0xff:
+			command = connection.read(1)[0]
+			if command == 0xff:
 				# This is a debug message instead.
 				print(connection.read_until(b"\n"))
 				continue
-			if fcount == 0xfe:
+			if command == 0xfe:
 				# This is a debug message instead.
 				print(connection.read_until(b"\n")[:-1].hex())
 				continue 
 
+			fcount = floor(connection.read(1)[0]/4)
 			data = b"".join(self.inputs[0][frame:frame + fcount])
 			frame += fcount
-			connection.write(bytearray([len(data)]) + data)
+			connection.write(bytearray([0x80, len(data)]) + data)
 			statusFunction(self, frame, data[-1]) if statusFunction else None
 
 

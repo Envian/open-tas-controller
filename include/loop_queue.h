@@ -16,7 +16,7 @@
 #pragma once
 #include "global.h"
 
-template <typename T, int SIZE>
+template <typename T, int SIZE, T underflowValue>
 class LoopQueue {
 private:
     T buffer[SIZE];
@@ -30,6 +30,7 @@ public:
     T get() {
         if (wptr == rptr) {
             underflow = true;
+            return underflowValue;
         }
         T value = buffer[rptr];
         rptr = (rptr + 1) % SIZE;

@@ -17,6 +17,8 @@
 #include "nintendo/oneline.h"
 #include "oneline.pio.h"
 
+#include "base_device.h"
+
 #include <hardware/pio.h>
 #include <hardware/clocks.h>
 
@@ -28,7 +30,11 @@
 
 namespace oneline {
     uint pio_offset = 0;
-    oneline_handler port_event_handler = 0;
+
+    bool OnelineDevice::is_oneline() const { return true; }
+    void OnelineDevice::handle_oneline(Port port) {
+        // TODO: Throw not implemented error?
+    };
 
     // Shortcut Methods
     inline bool can_read(Port port) { return !pio_sm_is_rx_fifo_empty(ONELINE_PIO, (uint)port); }
@@ -52,18 +58,14 @@ namespace oneline {
     void handle_irq() {
         Port port = get_port();
         if (port != port_invalid) {
-            if (port_event_handler) {
+            if (currentDevice != 0 && currentDevice->is_oneline()) {
                 LED_ON();
-                port_event_handler(port);
+                ((OnelineDevice*)currentDevice)->handle_oneline(port);
                 LED_OFF();
             }
             pio_interrupt_clear(ONELINE_PIO, port);
         }
     }
-
-    void set_handler(oneline_handler handler) {
-        port_event_handler = handler;
-    };
 
     void setup_port(Port port, uint pin) {
         pio_gpio_init(ONELINE_PIO, pin);
