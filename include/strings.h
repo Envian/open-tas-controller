@@ -14,10 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-// #include "debug.h"
+#pragma once
+#include "global.h"
 
-// void debug_init() {
-//     gpio_init(DEBUG_PIN);
-//     gpio_set_dir(DEBUG_PIN, GPIO_OUT);
-//     DEBUG_PIN_ON();
-// }
+namespace strings {
+
+    // Errors
+    static constexpr char ERROR_UNKNOWN[] = "UNKNOWN";
+    static constexpr char ERROR_SERIAL_READ_CORE1[] = "CORE1_SERIAL_READ";
+    static constexpr char ERROR_DATASTREAM_UNDERFLOW[] = "DATASTREAM_UNDERFLOW";
+    static constexpr char ERROR_DATASTREAM_OVERFLOW[] = "DATASTREAM_OVERFLOW";
+}

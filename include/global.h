@@ -19,10 +19,11 @@
 
 #include <pico/stdlib.h>
 #include "config.h"
-#include "debug.h"
 #include "helpers.h"
 
 
 #define TIMED_OUT(start, duration) (time_us_32() - start >= duration)
 
-
+// Activity LED:
+// #define LED_SHOWS_ONELINE_ACTIVITY
+#define LED_SHOWS_DATASTREAM_STATUS

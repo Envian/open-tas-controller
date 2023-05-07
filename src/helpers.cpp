@@ -16,7 +16,7 @@
 
 #include "helpers.h"
 
-#include <pico/stdlib.h>
+#include "io.h"
 
 char NIBLE_CHARACTER_MAPPING[] = {
     '0', '1', '2', '3',
@@ -28,4 +28,10 @@ char NIBLE_CHARACTER_MAPPING[] = {
 void fast_wait_us(uint duration) {
     uint start = time_us_32();
     while (time_us_32() - start < duration);
+}
+
+void fail(const char* error) {
+    io::write(0xFF); // ERROR command
+    io::writestr(error);
+    io::endstr();
 }

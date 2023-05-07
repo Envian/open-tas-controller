@@ -20,42 +20,47 @@ template <typename T, int SIZE, T underflowValue>
 class LoopQueue {
 private:
     T buffer[SIZE];
-    volatile uint rptr;
-    volatile uint wptr;
-    bool overflow, underflow;
+    uint rptr = 0, wptr = 0;
+    volatile int available = 0;
+    bool underflow = false, overflow = false;
 public:
     LoopQueue() {
-        clear();
-    }
-    T get() {
-        if (wptr == rptr) {
-            underflow = true;
-            return underflowValue;
-        }
-        T value = buffer[rptr];
-        rptr = (rptr + 1) % SIZE;
-        return value;
-    }
-    void add(T value) {
-        buffer[wptr] = value;
-        wptr = (wptr + 1) % SIZE;
-        if (wptr == rptr) {
-            overflow = true;
-        }
-    }
-    uint gets_avaiable() {
-        return (wptr < rptr) ? (wptr - rptr + SIZE) : (wptr - rptr);
-    }
-    uint adds_available() {
-        return ((rptr <= wptr) ? (rptr - wptr + SIZE) : (rptr - wptr)) - 1;
-    }
-    void clear() {
         wptr = 0;
         rptr = 0;
-        underflow = false;
-        overflow = false;
+        available = 0;
         for (uint x = 0; x < sizeof(buffer); x++) {
             *((uint8_t*)buffer + x) = 0;
         }
+    }
+
+    volatile T get() {
+        T value = buffer[rptr];
+        rptr = (rptr + 1) % SIZE;
+        available--;
+        underflow |= available < 0;
+        return value;
+    }
+
+    volatile void add(T value) {
+        buffer[wptr] = value;
+        wptr = (wptr + 1) % SIZE;
+        available++;
+        overflow |= available >= SIZE;
+    }
+    
+    volatile void add(const T values[], uint count) {
+        for (uint x = 0; x < count; x++) {
+            buffer[(wptr + x) % SIZE] = values[x];
+        }
+        wptr = (wptr + count) % SIZE;
+        available += count;
+        overflow |= available >= SIZE;
+    }
+
+    volatile uint gets_avaiable() {
+        return available;
+    }
+    volatile uint adds_available() {
+        return SIZE - available;
     }
 };

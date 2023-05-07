@@ -66,10 +66,6 @@ class N64Movie(Movie):
 				# This is a debug message instead.
 				print(connection.read_until(b"\n"))
 				continue
-			if command == 0xfe:
-				# This is a debug message instead.
-				print(connection.read_until(b"\n")[:-1].hex())
-				continue 
 
 			fcount = floor(connection.read(1)[0]/4)
 			data = b"".join(self.inputs[0][frame:frame + fcount])

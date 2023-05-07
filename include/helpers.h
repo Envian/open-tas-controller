@@ -21,3 +21,5 @@
 #define LED_OFF() gpio_put(PICO_DEFAULT_LED_PIN, 0);
 
 void fast_wait_us(uint duration);
+void fail(const char* error);
+void fail(const char* error, const char* details);

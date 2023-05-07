@@ -28,6 +28,14 @@
 #define ONELINE_PIO pio0
 #define ONELINE_IRQ PIO0_IRQ_0
 
+#ifdef LED_SHOWS_ONELINE_ACTIVITY
+#define DATASTREAM_START() LED_ON()
+#define DATASTREAM_END() LED_OFF()
+#else
+#define DATASTREAM_START()
+#define DATASTREAM_END()
+#endif
+
 namespace oneline {
     uint pio_offset = 0;
 
@@ -59,9 +67,9 @@ namespace oneline {
         Port port = get_port();
         if (port != port_invalid) {
             if (currentDevice != 0 && currentDevice->is_oneline()) {
-                LED_ON();
+                DATASTREAM_START();
                 ((OnelineDevice*)currentDevice)->handle_oneline(port);
-                LED_OFF();
+                DATASTREAM_END();
             }
             pio_interrupt_clear(ONELINE_PIO, port);
         }

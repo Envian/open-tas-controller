@@ -17,7 +17,10 @@
 #include "global.h"
 
 namespace io {
-    void write_blocking(uint8_t data);
+    int scan();
+    void write(uint8_t data);
+    void write(const uint8_t* data, uint count);
+    void writestr(const char* message);
+    void endstr();
     uint8_t read_blocking();
-    void flush();
 }

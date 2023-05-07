@@ -22,6 +22,14 @@
 #include "nintendo/oneline.h"
 #include "io.h"
 
+#ifdef LED_SHOWS_DATASTREAM_STATUS
+#define DATASTREAM_REQUEST_PENDING() LED_ON()
+#define DATASTREAM_REQUEST_FILLED() LED_OFF()
+#else
+#define DATASTREAM_REQUEST_PENDING() 
+#define DATASTREAM_REQUEST_FILLED() 
+#endif
+
 namespace n64::datastream::core1 {
     // void handle_packet(oneline::Port port) {
     //     uint timestamp = time_us_32();
@@ -52,12 +60,7 @@ namespace n64::datastream::core1 {
 }
 
 namespace n64 {
-    volatile uint dataRequested = 0;
-
-    void core1_init() {
-        // Sure hope this is always an n64 datastream reference...
-        ((n64_Datastream*)currentDevice)->core1_loop();
-    }
+    void core1_init();
 
     n64_Datastream::n64_Datastream() {
         // Clear out controller headers
@@ -68,7 +71,6 @@ namespace n64 {
             }
         }
 
-        // FIXME
         multicore_launch_core1(core1_init);
     }
 
@@ -77,15 +79,37 @@ namespace n64 {
         // TODO: Deconstructor
     }
 
+    void core1_init() {
+        // Sure hope this is always an n64 datastream reference...
+        ((n64_Datastream*)currentDevice)->core1_loop();
+    }
+
+    void n64_Datastream::core1_loop() {
+        oneline::init();
+        while (true) {
+            int count = this->databuffer.adds_available();
+            if (count > 0 && !pending_data) {
+                io::write(0x80);
+                io::write(count);
+                this->pending_data = true;
+                DATASTREAM_REQUEST_PENDING();
+            }
+        }
+    }
+
     // Datastream format:
     // 1 byte - size of buffer
     // n bytes - Data to send to the datastream.
     bool n64_Datastream::handle_datastream() {
         uint count = io::read_blocking();
         for (uint x = 0; x < count; x++) {
+            // In theory, this wait is not necessary.
+            while (this->databuffer.adds_available() == 0) { tight_loop_contents(); }
+
             this->databuffer.add(io::read_blocking());
         }
-        dataRequested -= count;
+        this->pending_data = false;
+        DATASTREAM_REQUEST_FILLED()
         return true;
     }
 
@@ -122,11 +146,16 @@ namespace n64 {
             break;
         case 1: // Read Inputs
             fast_wait_us(5);
+            this->last_input[0] = this->databuffer.get();
+            this->last_input[1] = this->databuffer.get();
+            this->last_input[2] = this->databuffer.get();
+            this->last_input[3] = this->databuffer.get(); 
+
             writer.begin_reply(4);
-            writer.write(this->databuffer.get());
-            writer.write(this->databuffer.get());
-            writer.write(this->databuffer.get());
-            writer.write(this->databuffer.get());
+            writer.write((uint8_t*)this->last_input);
+
+            this->last_port = port;
+            this->last_event++;
             break;
         // case 2:
         //     oneline::read_byte_blocking(port);
@@ -150,18 +179,6 @@ namespace n64 {
             // Unknown commands: Discard all the data
             oneline::read_discard(port);
             break;
-        }
-    }
-
-    void n64_Datastream::core1_loop() {
-        oneline::init();
-        while (true) {
-            int count = this->databuffer.adds_available() - dataRequested;
-            if (count > 0) {
-                io::write_blocking(0x80);
-                io::write_blocking(count);
-                dataRequested += count;
-            }
         }
     }
 }

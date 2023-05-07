@@ -34,6 +34,10 @@ namespace n64 {
         void handle_oneline(oneline::Port port);
         void core1_loop();
     private:
+        volatile bool pending_data = false;
+        volatile uint last_event = 0;
+        volatile oneline::Port last_port;
+        volatile uint8_t last_input[4];
         ControllerConfig controllers[N64_CONTROLLER_COUNT];
         LoopQueue<uint8_t, DATASTREAM_BUFFER_SIZE, 0> databuffer;
     };
