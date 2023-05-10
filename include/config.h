@@ -23,3 +23,7 @@
 
 // Each byte of data takes 32us to transmit.
 #define ONELINE_READ_TIMEOUT_US 48
+
+// Activity LED:
+#define LED_SHOWS_ONELINE_ACTIVITY
+// #define LED_SHOWS_DATASTREAM_STATUS

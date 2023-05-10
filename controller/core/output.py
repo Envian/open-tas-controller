@@ -15,11 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-def printPlayProgress(movie, frame, inputs):
+def printPlayProgress(movie, frame, inputs, message=None):
 	progress = frame / movie.frames if movie.frames > 0 else 0
 	icon = ["|", "/", "-", "\\"][frame % 4]
 
 	line = "{0: >7}/{1} [{3: <50}] {2:.1%} {4}".format(frame, movie.frames, progress, "#" * int(progress * 50), icon)
+
+	if message:
+		print(" " * len(line), end="", flush=False)
+		print("\b" * len(line), end="", flush=False)
+		print(message)
 
 	print(line, end="", flush=True)
 	print("\b" * len(line), end="", flush=False)

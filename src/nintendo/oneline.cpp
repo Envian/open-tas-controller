@@ -40,9 +40,7 @@ namespace oneline {
     uint pio_offset = 0;
 
     bool OnelineDevice::is_oneline() const { return true; }
-    void OnelineDevice::handle_oneline(Port port) {
-        // TODO: Throw not implemented error?
-    };
+    void OnelineDevice::handle_oneline([[maybe_unused]] Port port) { };
 
     // Shortcut Methods
     inline bool can_read(Port port) { return !pio_sm_is_rx_fifo_empty(ONELINE_PIO, (uint)port); }

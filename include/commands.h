@@ -14,36 +14,32 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include "global.h"
+#pragma once
+#include <pico/stdlib.h>
 
-#include "base_device.h"
-#include "nintendo/n64_datastream.h"
+namespace commands {
+    namespace device {
+        enum Device: uint8_t {
+            NOP = 0x00,
 
-#include "io.h"
+            // Datastreams
+            DATASTREAM_REQUEST = 0x80,
+            DATASTREAM_STATUS = 0x81,
 
-#include <hardware/gpio.h>
+            // Messaging
+            DEBUG = 0xFC,
+            INFO = 0xFD,
+            WARN = 0xFE,
+            ERROR = 0xFF,
+        };
+    };
+    namespace host {
+        enum Host: uint8_t {
+            NOP = 0x00,
 
-int main() {
-    gpio_init(PICO_DEFAULT_LED_PIN);
-    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
-
-    stdio_init_all();
-    
-    // Wait for a single byte before starting.
-    io::read_blocking();
-
-    currentDevice = new n64::n64_Datastream();
-
-    while(true) {
-        uint8_t command = io::read_blocking();
-
-        switch (command) {
-        case commands::host::DATASTREAM_DATA:
-            currentDevice->handle_datastream();
-            break;
-        case commands::host::CONTROLLER_CONFIG:
-            currentDevice->handle_controller_config();
-            break;
-        }
+            // Datastreams
+            DATASTREAM_DATA = 0x80,
+            CONTROLLER_CONFIG = 0x81
+        };
     }
 }

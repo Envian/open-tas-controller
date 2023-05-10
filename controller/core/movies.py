@@ -17,6 +17,13 @@
 
 from math import floor
 
+PREFIX = {
+	0xFC: "[DEBUG] ",
+	0xFD: "[INFO]  ",
+	0xFE: "[WARN]  ",
+	0xFF: "[ERROR] "
+}
+
 class Movie:
 	def __init__(self, system, game, controllers, author, description):
 		self.system = system
@@ -62,16 +69,17 @@ class N64Movie(Movie):
 		frame = 0
 		while True:
 			command = connection.read(1)[0]
-			if command == 0xff:
-				# This is a debug message instead.
-				print(connection.read_until(b"\n"))
-				continue
-
-			fcount = floor(connection.read(1)[0]/4)
-			data = b"".join(self.inputs[0][frame:frame + fcount])
-			frame += fcount
-			connection.write(bytearray([0x80, len(data)]) + data)
-			statusFunction(self, frame, data[-1]) if statusFunction else None
+			if command in [0xFC, 0xFD, 0xFE, 0xFF]:
+				data = connection.read_until(b"\n")[:-1]
+				statusFunction(self, frame, None, PREFIX[command] + data.decode("utf-8")) if statusFunction else None
+			elif command == 0x80:
+				fcount = floor(connection.read(1)[0]/4)
+				data = b"".join(self.inputs[0][frame:frame + fcount])
+				frame += fcount
+				connection.write(bytearray([0x80, len(data)]) + data)
+				statusFunction(self, frame, data[-1]) if statusFunction else None
+			else:
+				print("Unknown Command: " + bytearray([command]).hex())
 
 
 		# for frame in range(self.frames):

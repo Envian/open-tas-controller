@@ -16,22 +16,11 @@
 
 #include "helpers.h"
 
+#include <cstdarg>
 #include "io.h"
-
-char NIBLE_CHARACTER_MAPPING[] = {
-    '0', '1', '2', '3',
-    '4', '5', '6', '7',
-    '8', '9', 'A', 'B',
-    'C', 'D', 'E', 'F'
-};
+#include "commands.h"
 
 void fast_wait_us(uint duration) {
     uint start = time_us_32();
     while (time_us_32() - start < duration);
-}
-
-void fail(const char* error) {
-    io::write(0xFF); // ERROR command
-    io::writestr(error);
-    io::endstr();
 }

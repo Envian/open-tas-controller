@@ -30,6 +30,8 @@
 #define DATASTREAM_REQUEST_FILLED() 
 #endif
 
+LOGGERS("[n64]");
+
 namespace n64::datastream::core1 {
     // void handle_packet(oneline::Port port) {
     //     uint timestamp = time_us_32();
@@ -71,30 +73,15 @@ namespace n64 {
             }
         }
 
+        // This currently race conditions. currentDevice is null until the constructor finishes.
+        // Leaving this for now since it works most of the time, but i'll rip out multicore in the next commit.
+        Info("Datastream Initialized").send();
         multicore_launch_core1(core1_init);
     }
 
 
     n64_Datastream::~n64_Datastream() {
         // TODO: Deconstructor
-    }
-
-    void core1_init() {
-        // Sure hope this is always an n64 datastream reference...
-        ((n64_Datastream*)currentDevice)->core1_loop();
-    }
-
-    void n64_Datastream::core1_loop() {
-        oneline::init();
-        while (true) {
-            int count = this->databuffer.adds_available();
-            if (count > 0 && !pending_data) {
-                io::write(0x80);
-                io::write(count);
-                this->pending_data = true;
-                DATASTREAM_REQUEST_PENDING();
-            }
-        }
     }
 
     // Datastream format:
@@ -109,7 +96,7 @@ namespace n64 {
             this->databuffer.add(io::read_blocking());
         }
         this->pending_data = false;
-        DATASTREAM_REQUEST_FILLED()
+        DATASTREAM_REQUEST_FILLED();
         return true;
     }
 
@@ -124,6 +111,17 @@ namespace n64 {
                 this->controllers[x].header[n] = io::read_blocking();
             }
         }
+
+        Info("Controllers Reconfigured").send();
+        Debug("Controller 1: ").write_str_byte(controllers[0].connected).write_str(" ")
+            .write_bytes(controllers[0].header, sizeof(controllers[0].header)).send();
+        Debug("Controller 2: ").write_str_byte(controllers[1].connected).write_str(" ")
+            .write_bytes(controllers[1].header, sizeof(controllers[1].header)).send();
+        Debug("Controller 3: ").write_str_byte(controllers[2].connected).write_str(" ")
+            .write_bytes(controllers[2].header, sizeof(controllers[2].header)).send();
+        Debug("Controller 4: ").write_str_byte(controllers[3].connected).write_str(" ")
+            .write_bytes(controllers[3].header, sizeof(controllers[3].header)).send();
+
         return true;
     }
 
@@ -179,6 +177,26 @@ namespace n64 {
             // Unknown commands: Discard all the data
             oneline::read_discard(port);
             break;
+        }
+    }
+
+    // Core 1 functionality.
+    void core1_init() {
+        // Sure hope this is always an n64 datastream reference...
+        ((n64_Datastream*)currentDevice)->core1_loop();
+    }
+
+    void n64_Datastream::core1_loop() {
+        oneline::init();
+        Info("Datastream core1 Initialized").send();
+
+        while (true) {
+            int count = this->databuffer.adds_available();
+            if (count > 0 && !pending_data) {
+                io::CommandWriter(commands::device::DATASTREAM_REQUEST).write_byte(count).send();
+                this->pending_data = true;
+                DATASTREAM_REQUEST_PENDING();
+            }
         }
     }
 }

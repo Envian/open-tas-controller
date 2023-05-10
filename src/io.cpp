@@ -14,67 +14,115 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <stdio.h>
+#include <pico/mutex.h>
 #include "io.h"
 
-#include "strings.h"
+#include "labels.h"
 #include "loop_queue.h"
 
 #define MAINCORE (get_core_num() == 0)
 
+auto_init_mutex(serial_mutex);
+
+static constexpr char NIBLE_CHARACTER_MAPPING[] = {
+    '0', '1', '2', '3',
+    '4', '5', '6', '7',
+    '8', '9', 'A', 'B',
+    'C', 'D', 'E', 'F'
+};
+
 namespace io {
-    LoopQueue<uint8_t, 256, 0> message_buffer;
-
-    void write(uint8_t data) {
-        if (MAINCORE) {
-            putchar_raw(data);
-        } else {
-            message_buffer.add(data);
-        }
-    }
-
-    void write(const uint8_t* data, uint count) {
-        if (MAINCORE) {
-            for (uint x = 0; x < count; x++) {
-                putchar_raw(*(data+x));
-            }
-        } else {
-            message_buffer.add(data, count);
-        }
-    }
-    
-    void writestr(const char* message) {
-        uint8_t value = *message;
-        while (value) {
-            write(value);
-            message++;
-            value = *message;
-        }
-    }
-
-    void endstr() {
-        write('\n');
-    }
-
     uint8_t read_blocking() {
         if (MAINCORE) {
             int data;
             do {
-                // TODO: Maybe its not appropriate to send data from core1 in this method.
-                while (message_buffer.gets_avaiable()) {
-                    putchar_raw(message_buffer.get());
-                }
-
                 data = getchar_timeout_us(0);
             } while (data == PICO_ERROR_TIMEOUT);
             
             return data;
         } else {
-            fail(strings::ERROR_SERIAL_READ_CORE1);
             return 0;
         }
     }
     
-    void flush() {
+    CommandWriter::CommandWriter(commands::device::Device command) {
+        mutex_enter_blocking(&serial_mutex);
+        putchar_raw(command);
+    }
+
+    CommandWriter& CommandWriter::write_byte(uint8_t data) {
+        putchar_raw(data);
+        return *this;
+    }
+    CommandWriter& CommandWriter::write_short(uint16_t data) {
+        putchar_raw(data & 0xFF);
+        putchar_raw((data >> 8) & 0xFF);
+        return *this;
+    }
+    CommandWriter& CommandWriter::write_int(uint32_t data) {
+        putchar_raw(data & 0xFF);
+        putchar_raw((data >> 8) & 0xFF);
+        putchar_raw((data >> 16) & 0xFF);
+        putchar_raw((data >> 24) & 0xFF);
+        return *this;
+    }
+    CommandWriter& CommandWriter::write_bytes(const uint8_t* data, uint count) {
+        for (uint x = 0; x < count; x++) {
+            putchar_raw(*(data + x));
+        }
+        return *this;
+    } 
+
+    CommandWriter& CommandWriter::write_str(const char* message) { 
+        while (*message) {
+            putchar_raw(*message);
+            message++;
+        }
+        return *this;
+    }
+    CommandWriter& CommandWriter::write_str_byte(uint8_t data) {
+        putchar_raw(NIBLE_CHARACTER_MAPPING[(data >> 4)]);
+        putchar_raw(NIBLE_CHARACTER_MAPPING[data & 0xF]);
+        return *this;
+    }
+    CommandWriter& CommandWriter::write_str_short(uint16_t data) {
+        write_str_byte(data >> 8);
+        write_str_byte(data);
+        return *this;
+    }
+    CommandWriter& CommandWriter::write_str_int(uint32_t data) {
+        write_str_short(data >> 16);
+        write_str_short(data);
+        return *this;
+    }
+
+    void CommandWriter::send() {
         stdio_flush();
+        mutex_exit(&serial_mutex);
+    }
+    
+    CommandWriter debug(const char* message) {
+        return CommandWriter(commands::device::DEBUG).write_str(message);
+    }
+    CommandWriter info(const char* message) {
+        return CommandWriter(commands::device::INFO).write_str(message);
+    }
+    CommandWriter warn(const char* message) {
+        return CommandWriter(commands::device::WARN).write_str(message);
+    }
+    CommandWriter error(const char* message) {
+        return CommandWriter(commands::device::ERROR).write_str(message);
+    }
+
+
+    LogWriter::LogWriter(commands::device::Device command, const char* prefix, const char* msg) 
+    : CommandWriter(command) {
+        write_str(prefix);
+        write_str(msg);
+    }
+
+    void LogWriter::send() {
+        write_byte('\n');
+        CommandWriter::send();
     }
 }

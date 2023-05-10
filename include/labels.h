@@ -17,9 +17,11 @@
 #pragma once
 #include "global.h"
 
-namespace strings {
+namespace labels {
 
     // Errors
+    static constexpr char NOT_IMPLEMENTED[] = "NOT_IMPLEMENTED";
+
     static constexpr char ERROR_UNKNOWN[] = "UNKNOWN";
     static constexpr char ERROR_SERIAL_READ_CORE1[] = "CORE1_SERIAL_READ";
     static constexpr char ERROR_DATASTREAM_UNDERFLOW[] = "DATASTREAM_UNDERFLOW";

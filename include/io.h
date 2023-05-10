@@ -15,12 +15,44 @@
 
 #pragma once
 #include "global.h"
+#include "commands.h"
+
+#define __LOGGER(__name, __cmd, __prefix)\
+class __name : public io::LogWriter {\
+public:\
+    __name(const char* msg) : LogWriter(__cmd, __prefix, msg) {}\
+};
+
+#define LOGGERS(prefix) \
+__LOGGER(Debug, commands::device::DEBUG, prefix)\
+__LOGGER(Info, commands::device::INFO, prefix)\
+__LOGGER(Warn, commands::device::WARN, prefix)\
+__LOGGER(Error, commands::device::ERROR, prefix)
 
 namespace io {
-    int scan();
-    void write(uint8_t data);
-    void write(const uint8_t* data, uint count);
-    void writestr(const char* message);
-    void endstr();
     uint8_t read_blocking();
+
+    // Message Writers
+    class CommandWriter {
+    public:
+        CommandWriter(commands::device::Device command);
+        
+        CommandWriter& write_byte(uint8_t data);
+        CommandWriter& write_short(uint16_t data);
+        CommandWriter& write_int(uint32_t data);
+        CommandWriter& write_bytes(const uint8_t *data, uint count);
+
+        CommandWriter& write_str(const char* message);
+        CommandWriter& write_str_byte(uint8_t data);
+        CommandWriter& write_str_short(uint16_t data);
+        CommandWriter& write_str_int(uint32_t data);
+
+        virtual void send();
+    };
+
+    class LogWriter : public CommandWriter {
+    public:
+        LogWriter(commands::device::Device command, const char* prefix, const char* msg);
+        void send() override;
+    };
 }

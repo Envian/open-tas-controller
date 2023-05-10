@@ -57,10 +57,10 @@ public:
         overflow |= available >= SIZE;
     }
 
-    volatile uint gets_avaiable() {
+    volatile int gets_avaiable() {
         return available;
     }
-    volatile uint adds_available() {
+    volatile int adds_available() {
         return SIZE - available;
     }
 };

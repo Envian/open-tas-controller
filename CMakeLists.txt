@@ -8,6 +8,9 @@ project(open-tas-controller C CXX ASM)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -DNDEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DNDEBUG")
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-ignored-qualifiers")
 
 pico_sdk_init()
@@ -33,6 +36,12 @@ pico_enable_stdio_uart(open-tas-controller 0)
 
 add_custom_command(TARGET open-tas-controller POST_BUILD
     COMMAND "picotool" "load" "-fx" "open-tas-controller.uf2"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/open-tas-controller.uf2"
+)
+
+add_custom_command(TARGET open-tas-controller POST_BUILD
+    COMMAND "picotool" "info" "-a" "open-tas-controller.uf2" "|" "grep" "binary"
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/open-tas-controller.uf2"
 )
