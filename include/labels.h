@@ -23,6 +23,7 @@ namespace labels {
     static constexpr char NOT_IMPLEMENTED[] = "NOT_IMPLEMENTED";
 
     static constexpr char ERROR_UNKNOWN[] = "UNKNOWN";
+    static constexpr char ERROR_NO_DEVICE[] = "NO_DEVICE_INITIALIZED";
     static constexpr char ERROR_SERIAL_READ_CORE1[] = "CORE1_SERIAL_READ";
     static constexpr char ERROR_DATASTREAM_UNDERFLOW[] = "DATASTREAM_UNDERFLOW";
     static constexpr char ERROR_DATASTREAM_OVERFLOW[] = "DATASTREAM_OVERFLOW";

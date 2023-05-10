@@ -34,8 +34,8 @@ namespace oneline {
 
     class OnelineDevice : public BaseDevice {
     public:
+        virtual bool is_oneline() const override;
         virtual void handle_oneline(Port port);
-        virtual bool is_oneline() const;
     };
 
     void init();

@@ -35,7 +35,11 @@ int main() {
     currentDevice = new n64::n64_Datastream();
 
     while(true) {
-        uint8_t command = io::read_blocking();
+        int command;
+        do {
+            currentDevice->update();
+            command = io::read();
+        } while (command == PICO_ERROR_TIMEOUT);
 
         switch (command) {
         case commands::host::DATASTREAM_DATA:

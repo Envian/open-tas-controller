@@ -30,6 +30,7 @@ __LOGGER(Warn, commands::device::WARN, prefix)\
 __LOGGER(Error, commands::device::ERROR, prefix)
 
 namespace io {
+    int read();
     uint8_t read_blocking();
 
     // Message Writers

@@ -22,16 +22,17 @@ BaseDevice::BaseDevice() {}
 
 BaseDevice::~BaseDevice() {}
 
-bool BaseDevice::handle_datastream() {
-    // TODO: Report Error
-    return true;
-}
-bool BaseDevice::handle_controller_config() {
-    // TODO: Report Error
-    return true;
-}
-
+void BaseDevice::update() {}
 
 bool BaseDevice::is_oneline() const {
     return false;
+}
+
+void BaseDevice::handle_datastream() {
+    // TODO: Report Error
+}
+
+void BaseDevice::handle_controller_config() {
+    // TODO: Report Error
+
 }

@@ -28,16 +28,18 @@ namespace n64 {
     class n64_Datastream : public oneline::OnelineDevice {
     public:
         n64_Datastream();
-        ~n64_Datastream();
-        bool handle_datastream();
-        bool handle_controller_config();
-        void handle_oneline(oneline::Port port);
-        void core1_loop();
+        ~n64_Datastream() override;
+
+        void update() override;
+        
+        void handle_datastream() override;
+        void handle_controller_config() override;
+        void handle_oneline(oneline::Port port) override;
     private:
-        volatile bool pending_data = false;
-        volatile uint last_event = 0;
-        volatile oneline::Port last_port;
-        volatile uint8_t last_input[4];
+        bool pending_data = false;
+        uint last_event = 0;
+        oneline::Port last_port;
+        uint8_t last_input[4];
         ControllerConfig controllers[N64_CONTROLLER_COUNT];
         LoopQueue<uint8_t, DATASTREAM_BUFFER_SIZE, 0> databuffer;
     };

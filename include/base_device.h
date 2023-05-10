@@ -21,10 +21,11 @@ public:
     BaseDevice();
     virtual ~BaseDevice();
 
-    // Handlers the state - false for success, non zero for error.
-    virtual bool handle_datastream();
-    virtual bool handle_controller_config();
+    virtual void update();
     virtual bool is_oneline() const;
+
+    virtual void handle_datastream();
+    virtual void handle_controller_config();
 };
 
 extern BaseDevice *currentDevice;

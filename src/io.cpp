@@ -14,15 +14,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <stdio.h>
-#include <pico/mutex.h>
 #include "io.h"
 
 #include "labels.h"
 #include "loop_queue.h"
 
 #define MAINCORE (get_core_num() == 0)
-
-auto_init_mutex(serial_mutex);
 
 static constexpr char NIBLE_CHARACTER_MAPPING[] = {
     '0', '1', '2', '3',
@@ -32,21 +29,20 @@ static constexpr char NIBLE_CHARACTER_MAPPING[] = {
 };
 
 namespace io {
+    int read() {
+        return getchar_timeout_us(0); 
+    }
+
     uint8_t read_blocking() {
-        if (MAINCORE) {
-            int data;
-            do {
-                data = getchar_timeout_us(0);
-            } while (data == PICO_ERROR_TIMEOUT);
-            
-            return data;
-        } else {
-            return 0;
-        }
+        int data;
+        do {
+            data = getchar_timeout_us(0);
+        } while (data == PICO_ERROR_TIMEOUT);
+        
+        return data;
     }
     
     CommandWriter::CommandWriter(commands::device::Device command) {
-        mutex_enter_blocking(&serial_mutex);
         putchar_raw(command);
     }
 
@@ -98,7 +94,6 @@ namespace io {
 
     void CommandWriter::send() {
         stdio_flush();
-        mutex_exit(&serial_mutex);
     }
     
     CommandWriter debug(const char* message) {

@@ -21,7 +21,7 @@ class LoopQueue {
 private:
     T buffer[SIZE];
     uint rptr = 0, wptr = 0;
-    volatile int available = 0;
+    int available = 0;
     bool underflow = false, overflow = false;
 public:
     LoopQueue() {
@@ -33,7 +33,7 @@ public:
         }
     }
 
-    volatile T get() {
+    T get() {
         T value = buffer[rptr];
         rptr = (rptr + 1) % SIZE;
         available--;
@@ -41,14 +41,14 @@ public:
         return value;
     }
 
-    volatile void add(T value) {
+    void add(T value) {
         buffer[wptr] = value;
         wptr = (wptr + 1) % SIZE;
         available++;
         overflow |= available >= SIZE;
     }
     
-    volatile void add(const T values[], uint count) {
+    void add(const T values[], uint count) {
         for (uint x = 0; x < count; x++) {
             buffer[(wptr + x) % SIZE] = values[x];
         }
@@ -57,10 +57,10 @@ public:
         overflow |= available >= SIZE;
     }
 
-    volatile int gets_avaiable() {
+    int gets_avaiable() {
         return available;
     }
-    volatile int adds_available() {
+    int adds_available() {
         return SIZE - available;
     }
 };
