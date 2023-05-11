@@ -16,19 +16,19 @@
 
 #pragma once
 #include "global.h"
-#include "nintendo/models.h"
+#include "nintendo/model.h"
 
 #include "nintendo/oneline.h"
-#include "loop_queue.h"
+#include "circular_queue.h"
 
 #define DATASTREAM_BUFFER_SIZE 64
 #define N64_CONTROLLER_COUNT 4
 
 namespace n64 {
-    class n64_Datastream : public oneline::OnelineDevice {
+    class Datastream : public oneline::OnelineDevice {
     public:
-        n64_Datastream();
-        ~n64_Datastream() override;
+        Datastream();
+        ~Datastream() override;
 
         void update() override;
         
@@ -41,6 +41,6 @@ namespace n64 {
         oneline::Port last_port;
         uint8_t last_input[4];
         ControllerConfig controllers[N64_CONTROLLER_COUNT];
-        LoopQueue<uint8_t, DATASTREAM_BUFFER_SIZE, 0> databuffer;
+        CircularQueue<uint8_t, DATASTREAM_BUFFER_SIZE, 0> databuffer;
     };
 }

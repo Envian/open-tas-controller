@@ -30,13 +30,12 @@ __LOGGER(Warn, commands::device::WARN, prefix)\
 __LOGGER(Error, commands::device::ERROR, prefix)
 
 namespace io {
-    int read();
     uint8_t read_blocking();
 
     // Message Writers
     class CommandWriter {
     public:
-        CommandWriter(commands::device::Device command);
+        CommandWriter(commands::device::Command command);
         
         CommandWriter& write_byte(uint8_t data);
         CommandWriter& write_short(uint16_t data);
@@ -53,7 +52,9 @@ namespace io {
 
     class LogWriter : public CommandWriter {
     public:
-        LogWriter(commands::device::Device command, const char* prefix, const char* msg);
+        LogWriter(commands::device::Command command, const char* prefix, const char* msg);
         void send() override;
     };
+
+    LOGGERS("[Core]");
 }

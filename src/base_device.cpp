@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include "base_device.h"
 
-BaseDevice *currentDevice;
+BaseDevice *current_device;
 
 BaseDevice::BaseDevice() {}
 

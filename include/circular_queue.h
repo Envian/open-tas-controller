@@ -17,14 +17,14 @@
 #include "global.h"
 
 template <typename T, int SIZE, T underflowValue>
-class LoopQueue {
+class CircularQueue {
 private:
     T buffer[SIZE];
     uint rptr = 0, wptr = 0;
     int available = 0;
     bool underflow = false, overflow = false;
 public:
-    LoopQueue() {
+    CircularQueue() {
         wptr = 0;
         rptr = 0;
         available = 0;

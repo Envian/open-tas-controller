@@ -28,4 +28,4 @@ public:
     virtual void handle_controller_config();
 };
 
-extern BaseDevice *currentDevice;
+extern BaseDevice *current_device;

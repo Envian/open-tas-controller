@@ -24,7 +24,9 @@
 #define LED_ON() gpio_put(PICO_DEFAULT_LED_PIN, 1);
 #define LED_OFF() gpio_put(PICO_DEFAULT_LED_PIN, 0);
 
+#define TIMED_OUT(start, duration) (time_us_32() - start >= duration)
+
 void fast_wait_us(uint duration);
 
-// Debug Methods
-#define UNIMPLEMENTED { io::error(labels::NOT_IMPLEMENTED).add(":").add(__PRETTY_FUNCTION__).done(); }
+// Debug Methods (This currently doesn't work)
+// #define UNIMPLEMENTED { io::error(labels::NOT_IMPLEMENTED).add(":").add(__PRETTY_FUNCTION__).done(); }

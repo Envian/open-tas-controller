@@ -32,21 +32,17 @@ int main() {
     // Wait for a single byte before starting.
     io::read_blocking();
 
-    currentDevice = new n64::n64_Datastream();
+    current_device = new n64::Datastream();
 
     while(true) {
-        int command;
-        do {
-            currentDevice->update();
-            command = io::read();
-        } while (command == PICO_ERROR_TIMEOUT);
-
-        switch (command) {
+        // The blocking loop for reading will update the device.
+        switch (io::read_blocking()) {
+        case commands::host::NOP: break;
         case commands::host::DATASTREAM_DATA:
-            currentDevice->handle_datastream();
+            current_device->handle_datastream();
             break;
         case commands::host::CONTROLLER_CONFIG:
-            currentDevice->handle_controller_config();
+            current_device->handle_controller_config();
             break;
         }
     }

@@ -19,7 +19,7 @@
 
 namespace commands {
     namespace device {
-        enum Device: uint8_t {
+        enum Command: uint8_t {
             NOP = 0x00,
 
             // Datastreams
@@ -34,12 +34,12 @@ namespace commands {
         };
     };
     namespace host {
-        enum Host: uint8_t {
+        enum Command: uint8_t {
             NOP = 0x00,
 
             // Datastreams
             DATASTREAM_DATA = 0x80,
             CONTROLLER_CONFIG = 0x81
         };
-    }
+    };
 }

@@ -33,7 +33,7 @@
 LOGGERS("[n64]");
 
 namespace n64 {
-    n64_Datastream::n64_Datastream() {
+    Datastream::Datastream() {
         // Clear out controller headers
         for (uint x = 0; x < N64_CONTROLLER_COUNT; x++) {
             controllers[x].connected = false;
@@ -46,11 +46,11 @@ namespace n64 {
         Info("Datastream Initialized").send();
     }
 
-    n64_Datastream::~n64_Datastream() {
+    Datastream::~Datastream() {
         // TODO: Deconstructor
     }
 
-    void n64_Datastream::update() {
+    void Datastream::update() {
         if (!this->pending_data && this->databuffer.adds_available()) {
             io::CommandWriter(commands::device::DATASTREAM_REQUEST)
                 .write_byte(this->databuffer.adds_available())
@@ -63,7 +63,7 @@ namespace n64 {
     // Datastream format:
     // 1 byte - size of buffer
     // n bytes - Data to send to the datastream.
-    void n64_Datastream::handle_datastream() {
+    void Datastream::handle_datastream() {
         uint count = io::read_blocking();
         for (uint x = 0; x < count; x++) {
             this->databuffer.add(io::read_blocking());
@@ -76,7 +76,7 @@ namespace n64 {
     // 4x of the following:
     //   1 byte  - controller info (0 disconnected)
     //   3 bytes - controller header
-    void n64_Datastream::handle_controller_config() {
+    void Datastream::handle_controller_config() {
         for (uint x = 0; x < N64_CONTROLLER_COUNT; x++) {
             this->controllers[x].connected = !!io::read_blocking();
             for (uint n = 0; n < sizeof(this->controllers[x].header); n++) {
@@ -104,13 +104,12 @@ namespace n64 {
             .write_bytes(controllers[3].header, sizeof(controllers[3].header)).send();
     }
 
-    void n64_Datastream::handle_oneline(oneline::Port port) {
+    void Datastream::handle_oneline(oneline::Port port) {
         ControllerConfig *controller = &controllers[port];
         if (!controller->connected) {
             return oneline::read_discard(port);
         }
 
-        oneline::Writer writer(port);
         int command = oneline::read_byte_blocking(port);
 
         // Note: Can't respond too quickly, or the N64 will not register the command.
@@ -118,8 +117,8 @@ namespace n64 {
         case 0: // Identify Controller
         case 0xFF: // Reset Controller
             fast_wait_us(5);
-            writer.begin_reply(3);
-            writer.write(&controller->header[port * 3]);
+            oneline::Writer(port, 3)
+                .write(&controller->header[port * 3]);
             break;
         case 1: // Read Inputs
             fast_wait_us(5);
@@ -128,8 +127,8 @@ namespace n64 {
             this->last_input[2] = this->databuffer.get();
             this->last_input[3] = this->databuffer.get(); 
 
-            writer.begin_reply(4);
-            writer.write((uint8_t*)this->last_input);
+            oneline::Writer(port, 4)
+                .write(this->last_input);
 
             this->last_port = port;
             this->last_event++;

@@ -13,11 +13,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <stdio.h>
 #include "io.h"
 
+#include <stdio.h>
+
+#include "base_device.h"
 #include "labels.h"
-#include "loop_queue.h"
 
 #define MAINCORE (get_core_num() == 0)
 
@@ -29,20 +30,17 @@ static constexpr char NIBLE_CHARACTER_MAPPING[] = {
 };
 
 namespace io {
-    int read() {
-        return getchar_timeout_us(0); 
-    }
-
     uint8_t read_blocking() {
         int data;
         do {
+            if (current_device) { current_device->update(); }
             data = getchar_timeout_us(0);
         } while (data == PICO_ERROR_TIMEOUT);
         
         return data;
     }
     
-    CommandWriter::CommandWriter(commands::device::Device command) {
+    CommandWriter::CommandWriter(commands::device::Command command) {
         putchar_raw(command);
     }
 
@@ -92,9 +90,7 @@ namespace io {
         return *this;
     }
 
-    void CommandWriter::send() {
-        stdio_flush();
-    }
+    void CommandWriter::send() { }
     
     CommandWriter debug(const char* message) {
         return CommandWriter(commands::device::DEBUG).write_str(message);
@@ -110,7 +106,7 @@ namespace io {
     }
 
 
-    LogWriter::LogWriter(commands::device::Device command, const char* prefix, const char* msg) 
+    LogWriter::LogWriter(commands::device::Command command, const char* prefix, const char* msg) 
     : CommandWriter(command) {
         write_str(prefix);
         write_str(msg);
@@ -118,6 +114,5 @@ namespace io {
 
     void LogWriter::send() {
         write_byte('\n');
-        CommandWriter::send();
     }
 }
