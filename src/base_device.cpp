@@ -16,23 +16,17 @@
 #include <stdio.h>
 #include "base_device.h"
 
+#include "helpers.h"
+
 BaseDevice *current_device;
 
 BaseDevice::BaseDevice() {}
-
 BaseDevice::~BaseDevice() {}
 
 void BaseDevice::update() {}
-
 bool BaseDevice::is_oneline() const {
     return false;
 }
 
-void BaseDevice::handle_datastream() {
-    // TODO: Report Error
-}
-
-void BaseDevice::handle_controller_config() {
-    // TODO: Report Error
-
-}
+void BaseDevice::handle_datastream() {};
+void BaseDevice::handle_controller_config() {};

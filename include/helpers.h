@@ -30,4 +30,4 @@
 void fast_wait_us(uint duration);
 
 // Debug Methods (This currently doesn't work)
-// #define UNIMPLEMENTED { io::error(labels::NOT_IMPLEMENTED).add(":").add(__PRETTY_FUNCTION__).done(); }
+#define UNIMPLEMENTED { io::Error(labels::NOT_IMPLEMENTED).write_byte(':').write_str(__PRETTY_FUNCTION__).send(); }

@@ -41,7 +41,10 @@ namespace oneline {
     uint pio_offset = 0;
 
     bool OnelineDevice::is_oneline() const { return true; }
-    void OnelineDevice::handle_oneline([[maybe_unused]] Port port) { };
+    void OnelineDevice::handle_oneline([[maybe_unused]] Port port) { 
+        // TODO: Error log here, but we can't just log straight to stdio.
+        // This will be called in an interrupt and cannot safely write.
+    };
 
     // Shortcut Methods
     const inline bool can_read(Port port) { return !pio_sm_is_rx_fifo_empty(ONELINE_PIO, (uint)port); }

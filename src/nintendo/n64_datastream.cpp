@@ -31,8 +31,6 @@
 #define DATASTREAM_REQUEST_FILLED() 
 #endif
 
-LOGGERS("[n64]");
-
 namespace n64 {
     Datastream::Datastream() {
         // Clear out controller headers
@@ -44,7 +42,7 @@ namespace n64 {
         }
 
         oneline::init();
-        Info("Datastream Initialized").send();
+        io::Info(labels::INFO_DEVICE_INIT).write(labels::CONSOLE_N64).write(labels::DEVICE_TYPE_DATASTREAM);
     }
 
     Datastream::~Datastream() {
@@ -54,8 +52,7 @@ namespace n64 {
     void Datastream::update() {
         if (!this->pending_data && this->databuffer.adds_available()) {
             io::CommandWriter(commands::device::DATASTREAM_REQUEST)
-                .write_byte(this->databuffer.adds_available())
-                .send();
+                .write_byte(this->databuffer.adds_available());
             this->pending_data = true;
             DATASTREAM_REQUEST_PENDING();
         }
@@ -85,24 +82,22 @@ namespace n64 {
             }
         }
 
-        Info("Controllers Reconfigured").send();
-        Debug("Controller 1: ")
-            .write_str_byte(controllers[0].connected)
-            .write_str(" ")
-            .write_bytes(controllers[0].header, sizeof(controllers[0].header))
-            .send();
-        Debug("Controller 2: ")
-            .write_str_byte(controllers[1].connected)
-            .write_str(" ")
-            .write_bytes(controllers[1].header, sizeof(controllers[1].header)).send();
-        Debug("Controller 3: ")
-            .write_str_byte(controllers[2].connected)
-            .write_str(" ")
-            .write_bytes(controllers[2].header, sizeof(controllers[2].header)).send();
-        Debug("Controller 4: ")
-            .write_str_byte(controllers[3].connected)
-            .write_str(" ")
-            .write_bytes(controllers[3].header, sizeof(controllers[3].header)).send();
+        io::Debug(labels::DEBUG_PORT_INFO)
+            .write_byte(1)
+            .write_byte(controllers[0].connected)
+            .write_bytes(controllers[0].header, sizeof(controllers[0].header));
+        io::Debug(labels::DEBUG_PORT_INFO)
+            .write_byte(1)
+            .write_byte(controllers[1].connected)
+            .write_bytes(controllers[1].header, sizeof(controllers[1].header));
+        io::Debug(labels::DEBUG_PORT_INFO)
+            .write_byte(1)
+            .write_byte(controllers[2].connected)
+            .write_bytes(controllers[2].header, sizeof(controllers[2].header));
+        io::Debug(labels::DEBUG_PORT_INFO)
+            .write_byte(1)
+            .write_byte(controllers[3].connected)
+            .write_bytes(controllers[3].header, sizeof(controllers[3].header));
     }
 
     void Datastream::handle_oneline(oneline::Port port) {

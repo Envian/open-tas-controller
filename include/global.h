@@ -18,7 +18,6 @@
 #define PICO_STDIO_ENABLE_CRLF_SUPPORT 0
 
 #include <pico/stdlib.h>
-
 #include "config.h"
 
 typedef uint8_t byte;

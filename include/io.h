@@ -17,18 +17,6 @@
 #include "global.h"
 #include "commands.h"
 
-#define __LOGGER(__name, __cmd, __prefix)\
-class __name : public io::LogWriter {\
-public:\
-    __name(const char* msg) : LogWriter(__cmd, __prefix, msg) {}\
-};
-
-#define LOGGERS(prefix) \
-__LOGGER(Debug, commands::device::DEBUG, prefix)\
-__LOGGER(Info, commands::device::INFO, prefix)\
-__LOGGER(Warn, commands::device::WARN, prefix)\
-__LOGGER(Error, commands::device::ERROR, prefix)
-
 namespace io {
     byte read_blocking();
 
@@ -41,20 +29,54 @@ namespace io {
         CommandWriter& write_short(uint16_t data);
         CommandWriter& write_int(uint32_t data);
         CommandWriter& write_bytes(const byte *data, int count);
-
-        CommandWriter& write_str(const char* message);
-        CommandWriter& write_str_byte(byte data);
-        CommandWriter& write_str_short(uint16_t data);
-        CommandWriter& write_str_int(uint32_t data);
-
-        virtual void send();
     };
 
-    class LogWriter : public CommandWriter {
+    class LogWriter : private CommandWriter {
     public:
-        LogWriter(commands::device::Command command, const char* prefix, const char* msg);
-        void send() override;
+        LogWriter(commands::device::Command command, const char* msg);
+        ~LogWriter();
+
+        LogWriter& write(const char* message);
+        LogWriter& write_byte(byte data);
+        LogWriter& write_short(uint16_t data);
+        LogWriter& write_int(uint32_t data);
+        LogWriter& write_bytes(const byte* data, int count);
+        void send(); // Dummy method, for semantics
+
+        // Prevent log writers from being copied, calling destructor early
+        LogWriter(const LogWriter&) = delete;
+        LogWriter& operator=(const LogWriter&) = delete;
     };
 
-    LOGGERS("[Core]");
+    class Debug : public LogWriter {
+    public:
+        Debug(const char* message);
+
+        Debug(const Debug&) = delete;
+        Debug& operator=(const Debug&) = delete;
+    };
+
+    class Info : public LogWriter {
+    public:
+        Info(const char* message);
+
+        Info(const Info&) = delete;
+        Info& operator=(const Info&) = delete;
+    };
+
+    class Warn : public LogWriter {
+    public:
+        Warn(const char* message);
+
+        Warn(const Warn&) = delete;
+        Warn& operator=(const Warn&) = delete;
+    };
+
+    class Error : public LogWriter {
+    public:
+        Error(const char* message);
+
+        Error(const Error&) = delete;
+        Error& operator=(const Error&) = delete;
+    };
 }

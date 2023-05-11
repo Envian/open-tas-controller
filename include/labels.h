@@ -18,13 +18,19 @@
 #include "global.h"
 
 namespace labels {
+    static constexpr char CONSOLE_N64[] = "N64";
+
+    static constexpr char DEVICE_TYPE_PLAYBACK[] = "PLAY";
+    static constexpr char DEVICE_TYPE_RECORD[] = "RECORD";
+    // Datastream is a variation of playback which can replay mupen movies.
+    static constexpr char DEVICE_TYPE_DATASTREAM[] = "DATASTREAM";
+
+    // PORT_INFO - Varies based on system.
+    static constexpr char DEBUG_PORT_INFO[] = "PORT_INFO";
+    
+    // Infos
+    // DEVICE_INITIALIZED - Console(3char) - Type
+    static constexpr char INFO_DEVICE_INIT[] = "DEVICE_INIT";
 
     // Errors
-    static constexpr char NOT_IMPLEMENTED[] = "NOT_IMPLEMENTED";
-
-    static constexpr char ERROR_UNKNOWN[] = "UNKNOWN";
-    static constexpr char ERROR_NO_DEVICE[] = "NO_DEVICE_INITIALIZED";
-    static constexpr char ERROR_SERIAL_READ_CORE1[] = "CORE1_SERIAL_READ";
-    static constexpr char ERROR_DATASTREAM_UNDERFLOW[] = "DATASTREAM_UNDERFLOW";
-    static constexpr char ERROR_DATASTREAM_OVERFLOW[] = "DATASTREAM_OVERFLOW";
 }

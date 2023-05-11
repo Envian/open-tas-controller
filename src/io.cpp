@@ -67,52 +67,61 @@ namespace io {
         return *this;
     } 
 
-    CommandWriter& CommandWriter::write_str(const char* message) { 
+
+    LogWriter::LogWriter(commands::device::Command command, const char* msg) 
+    : CommandWriter(command) {
+        write(msg);
+    }
+    LogWriter::~LogWriter() {
+        CommandWriter::write_byte('\n');
+    }
+
+    LogWriter& LogWriter::write(const char* message) { 
+        CommandWriter::write_byte(' ');
         while (*message) {
-            putchar_raw(*message);
+            CommandWriter::write_byte(*message);
             message++;
         }
         return *this;
     }
-    CommandWriter& CommandWriter::write_str_byte(byte data) {
-        putchar_raw(NIBLE_CHARACTER_MAPPING[(data >> 4)]);
-        putchar_raw(NIBLE_CHARACTER_MAPPING[data & 0xF]);
+    LogWriter& LogWriter::write_byte(byte data) {
+        CommandWriter::write_byte(' ');
+        CommandWriter::write_byte(NIBLE_CHARACTER_MAPPING[(data >> 4) & 0xF]);
+        CommandWriter::write_byte(NIBLE_CHARACTER_MAPPING[(data >> 0) & 0xF]);
         return *this;
     }
-    CommandWriter& CommandWriter::write_str_short(uint16_t data) {
-        write_str_byte(data >> 8);
-        write_str_byte(data);
+    LogWriter& LogWriter::write_short(uint16_t data) {
+        CommandWriter::write_byte(' ');
+        CommandWriter::write_byte(NIBLE_CHARACTER_MAPPING[(data >> 12) & 0xF]);
+        CommandWriter::write_byte(NIBLE_CHARACTER_MAPPING[(data >>  8) & 0xF]);
+        CommandWriter::write_byte(NIBLE_CHARACTER_MAPPING[(data >>  4) & 0xF]);
+        CommandWriter::write_byte(NIBLE_CHARACTER_MAPPING[(data >>  0) & 0xF]);
         return *this;
     }
-    CommandWriter& CommandWriter::write_str_int(uint32_t data) {
-        write_str_short(data >> 16);
-        write_str_short(data);
+    LogWriter& LogWriter::write_int(uint32_t data) {
+        CommandWriter::write_byte(' ');
+        CommandWriter::write_byte(NIBLE_CHARACTER_MAPPING[(data >> 28) & 0xF]);
+        CommandWriter::write_byte(NIBLE_CHARACTER_MAPPING[(data >> 24) & 0xF]);
+        CommandWriter::write_byte(NIBLE_CHARACTER_MAPPING[(data >> 20) & 0xF]);
+        CommandWriter::write_byte(NIBLE_CHARACTER_MAPPING[(data >> 16) & 0xF]);
+        CommandWriter::write_byte(NIBLE_CHARACTER_MAPPING[(data >> 12) & 0xF]);
+        CommandWriter::write_byte(NIBLE_CHARACTER_MAPPING[(data >>  8) & 0xF]);
+        CommandWriter::write_byte(NIBLE_CHARACTER_MAPPING[(data >>  4) & 0xF]);
+        CommandWriter::write_byte(NIBLE_CHARACTER_MAPPING[(data >>  0) & 0xF]);
         return *this;
     }
+    LogWriter& LogWriter::write_bytes(const byte* data, int count) {
+        CommandWriter::write_byte(' ');
+        for (int x = 0; x < count; x++) {
+            CommandWriter::write_byte(NIBLE_CHARACTER_MAPPING[(*(data + x) >> 4) & 0xF]);
+            CommandWriter::write_byte(NIBLE_CHARACTER_MAPPING[(*(data + x) >> 0) & 0xF]);
+        }
+        return *this;
+    }
+    void LogWriter::send() {}
 
-    void CommandWriter::send() { }
-    
-    CommandWriter debug(const char* message) {
-        return CommandWriter(commands::device::DEBUG).write_str(message);
-    }
-    CommandWriter info(const char* message) {
-        return CommandWriter(commands::device::INFO).write_str(message);
-    }
-    CommandWriter warn(const char* message) {
-        return CommandWriter(commands::device::WARN).write_str(message);
-    }
-    CommandWriter error(const char* message) {
-        return CommandWriter(commands::device::ERROR).write_str(message);
-    }
-
-
-    LogWriter::LogWriter(commands::device::Command command, const char* prefix, const char* msg) 
-    : CommandWriter(command) {
-        write_str(prefix);
-        write_str(msg);
-    }
-
-    void LogWriter::send() {
-        write_byte('\n');
-    }
+    Debug::Debug(const char* message) : LogWriter(commands::device::DEBUG, message) {};
+    Info::Info(const char* message) : LogWriter(commands::device::INFO, message) {};
+    Warn::Warn(const char* message) : LogWriter(commands::device::WARN, message) {};
+    Error::Error(const char* message) : LogWriter(commands::device::ERROR, message) {};
 }
