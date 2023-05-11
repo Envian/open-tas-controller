@@ -17,10 +17,11 @@
 #include "nintendo/oneline.h"
 #include "oneline.pio.h"
 
-#include "base_device.h"
-
 #include <hardware/pio.h>
 #include <hardware/clocks.h>
+
+#include "base_device.h"
+#include "helpers.h"
 
 // REFERENCE: https://kthompson.gitlab.io/2016/07/26/n64-controller-protocol.html
 // Note: GCN Controller uses the same format, hence the shared code.
@@ -119,7 +120,7 @@ namespace oneline {
         return -1;
     }
 
-    int __time_critical_func(read_bytes_blocking)(uint8_t buffer[], Port port, int count, int request_bytes) {
+    int __time_critical_func(read_bytes_blocking)(byte buffer[], Port port, int count, int request_bytes) {
         // TODO: Assert count > 0, and request_bytes <= count.
         int bytes = 0;
         uint last_activity = time_us_32();
@@ -179,7 +180,7 @@ namespace oneline {
     // |     WRITING      |
     // --------------------
 
-    // void __time_critical_func(write_bytes)(Port port, const uint8_t buffer[], int count) {
+    // void __time_critical_func(write_bytes)(Port port, const byte buffer[], int count) {
     //     int bytes = 0;
     //     while (bytes < count) {
     //         // Load the 4 bytes into an int without reading past the end of the buffer.
@@ -193,19 +194,19 @@ namespace oneline {
     //     }
     // }
     //
-    // void __time_critical_func(write_request)(Port port, const uint8_t buffer[], int count) {
+    // void __time_critical_func(write_request)(Port port, const byte buffer[], int count) {
     //     // This differs from a reply in that it handsoff with a 1 bit.
     //     start_request(port, count * 8 + 1);
     //     write_bytes(port, buffer, count);
     //     write_blocking(port, ~(1 << 31));
     // }
     //
-    // void __time_critical_func(write_reply)(Port port, const uint8_t buffer[], int count) {
+    // void __time_critical_func(write_reply)(Port port, const byte buffer[], int count) {
     //     start_reply(port, count * 8);
     //     write_bytes(port, buffer, count);
     // }
 
-    Writer::Writer(Port port, uint count) : port(port), bytes(count) {
+    Writer::Writer(Port port, int count) : port(port), bytes(count) {
         this->written = 0;
         start_reply(this->port, bytes * 8);
     }
@@ -217,8 +218,8 @@ namespace oneline {
     //     start_request(this->port, bytes * 8 + 1);
     // }
 
-    Writer& Writer::write(uint8_t value) {
-        // Shift the data we plan to write into the uint buffer.
+    Writer& Writer::write(byte value) {
+        // Shift the data we plan to write into the buffer.
         this->data = (this->data << 8) | value;
         this->written++;
 
@@ -234,8 +235,8 @@ namespace oneline {
         return *this;
     }
 
-    Writer& Writer::write(const uint8_t* buffer) {
-        for (uint n = 0; this->written < this->bytes; n++) {
+    Writer& Writer::write(const byte* buffer) {
+        for (int n = 0; this->written < this->bytes; n++) {
             this->write(buffer[n]);
         }
         return *this;

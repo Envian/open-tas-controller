@@ -16,10 +16,11 @@
 
 #pragma once
 #include <pico/stdlib.h>
+#include "global.h"
 
 namespace commands {
     namespace device {
-        enum Command: uint8_t {
+        enum Command: byte {
             NOP = 0x00,
 
             // Datastreams
@@ -34,7 +35,7 @@ namespace commands {
         };
     };
     namespace host {
-        enum Command: uint8_t {
+        enum Command: byte {
             NOP = 0x00,
 
             // Datastreams

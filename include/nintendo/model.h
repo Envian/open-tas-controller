@@ -20,6 +20,6 @@
 namespace n64 {
     struct ControllerConfig {
         bool connected;
-        uint8_t header[3];
+        byte header[3];
     };
 }

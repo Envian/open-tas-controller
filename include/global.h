@@ -18,7 +18,7 @@
 #define PICO_STDIO_ENABLE_CRLF_SUPPORT 0
 
 #include <pico/stdlib.h>
-#include "config.h"
-#include "helpers.h"
 
-#define TIMED_OUT(start, duration) (time_us_32() - start >= duration)
+#include "config.h"
+
+typedef uint8_t byte;

@@ -41,23 +41,24 @@ namespace oneline {
     void init();
 
     int read_byte_blocking(Port port);
-    int read_bytes_blocking(uint8_t buffer[], Port port, int count, int request_bytes);
+    int read_bytes_blocking(byte buffer[], Port port, int count, int request_bytes);
     void read_discard(Port port);
 
-    // void write_request(Port port, const uint8_t buffer[], int bytes);
-    // void write_reply(Port port, const uint8_t buffer[], int bytes);
+    // void write_request(Port port, const byte buffer[], int bytes);
+    // void write_reply(Port port, const byte buffer[], int bytes);
 
     class Writer {
     public:
-        Writer(Port port, uint count);
-        // void begin_request(uint bytes);
-        Writer& write(uint8_t data);
-        Writer& write(const uint8_t* buffer);
+        Writer(Port port, int count);
+        // void begin_response(int bytes);
+        // void begin_request(int bytes);
+        Writer& write(byte data);
+        Writer& write(const byte* buffer);
         Writer& write_zeros();
     private:
         const Port port;
-        const uint bytes;
-        uint written;
+        const int bytes;
+        int written;
         uint32_t data;
     };
 }

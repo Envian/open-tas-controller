@@ -30,7 +30,7 @@ static constexpr char NIBLE_CHARACTER_MAPPING[] = {
 };
 
 namespace io {
-    uint8_t read_blocking() {
+    byte read_blocking() {
         int data;
         do {
             if (current_device) { current_device->update(); }
@@ -44,7 +44,7 @@ namespace io {
         putchar_raw(command);
     }
 
-    CommandWriter& CommandWriter::write_byte(uint8_t data) {
+    CommandWriter& CommandWriter::write_byte(byte data) {
         putchar_raw(data);
         return *this;
     }
@@ -60,8 +60,8 @@ namespace io {
         putchar_raw((data >> 24) & 0xFF);
         return *this;
     }
-    CommandWriter& CommandWriter::write_bytes(const uint8_t* data, uint count) {
-        for (uint x = 0; x < count; x++) {
+    CommandWriter& CommandWriter::write_bytes(const byte* data, int count) {
+        for (int x = 0; x < count; x++) {
             putchar_raw(*(data + x));
         }
         return *this;
@@ -74,7 +74,7 @@ namespace io {
         }
         return *this;
     }
-    CommandWriter& CommandWriter::write_str_byte(uint8_t data) {
+    CommandWriter& CommandWriter::write_str_byte(byte data) {
         putchar_raw(NIBLE_CHARACTER_MAPPING[(data >> 4)]);
         putchar_raw(NIBLE_CHARACTER_MAPPING[data & 0xF]);
         return *this;

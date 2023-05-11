@@ -30,20 +30,20 @@ __LOGGER(Warn, commands::device::WARN, prefix)\
 __LOGGER(Error, commands::device::ERROR, prefix)
 
 namespace io {
-    uint8_t read_blocking();
+    byte read_blocking();
 
     // Message Writers
     class CommandWriter {
     public:
         CommandWriter(commands::device::Command command);
         
-        CommandWriter& write_byte(uint8_t data);
+        CommandWriter& write_byte(byte data);
         CommandWriter& write_short(uint16_t data);
         CommandWriter& write_int(uint32_t data);
-        CommandWriter& write_bytes(const uint8_t *data, uint count);
+        CommandWriter& write_bytes(const byte *data, int count);
 
         CommandWriter& write_str(const char* message);
-        CommandWriter& write_str_byte(uint8_t data);
+        CommandWriter& write_str_byte(byte data);
         CommandWriter& write_str_short(uint16_t data);
         CommandWriter& write_str_int(uint32_t data);
 

@@ -39,8 +39,8 @@ namespace n64 {
         bool pending_data = false;
         uint last_event = 0;
         oneline::Port last_port;
-        uint8_t last_input[4];
+        byte last_input[4];
         ControllerConfig controllers[N64_CONTROLLER_COUNT];
-        CircularQueue<uint8_t, DATASTREAM_BUFFER_SIZE, 0> databuffer;
+        CircularQueue<byte, DATASTREAM_BUFFER_SIZE> databuffer;
     };
 }

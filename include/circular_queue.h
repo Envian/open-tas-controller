@@ -16,11 +16,11 @@
 #pragma once
 #include "global.h"
 
-template <typename T, int SIZE, T underflowValue>
+template <typename T, int SIZE>
 class CircularQueue {
 private:
     T buffer[SIZE];
-    uint rptr = 0, wptr = 0;
+    int rptr = 0, wptr = 0;
     int available = 0;
     bool underflow = false, overflow = false;
 public:
@@ -28,8 +28,8 @@ public:
         wptr = 0;
         rptr = 0;
         available = 0;
-        for (uint x = 0; x < sizeof(buffer); x++) {
-            *((uint8_t*)buffer + x) = 0;
+        for (int x = 0; x < (int)sizeof(buffer); x++) {
+            *((byte*)buffer + x) = 0;
         }
     }
 
@@ -48,8 +48,8 @@ public:
         overflow |= available >= SIZE;
     }
     
-    void add(const T values[], uint count) {
-        for (uint x = 0; x < count; x++) {
+    void add(const T values[], int count) {
+        for (int x = 0; x < count; x++) {
             buffer[(wptr + x) % SIZE] = values[x];
         }
         wptr = (wptr + count) % SIZE;

@@ -19,6 +19,7 @@
 #include <pico/multicore.h>
 #include <hardware/irq.h>
 
+#include "helpers.h"
 #include "nintendo/oneline.h"
 #include "io.h"
 
@@ -35,9 +36,9 @@ LOGGERS("[n64]");
 namespace n64 {
     Datastream::Datastream() {
         // Clear out controller headers
-        for (uint x = 0; x < N64_CONTROLLER_COUNT; x++) {
+        for (int x = 0; x < N64_CONTROLLER_COUNT; x++) {
             controllers[x].connected = false;
-            for (uint y = 0; y < sizeof(controllers[x].header); y++) {
+            for (int y = 0; y < (int)sizeof(controllers[x].header); y++) {
                 controllers[x].header[y] = 0;
             }
         }
@@ -64,8 +65,8 @@ namespace n64 {
     // 1 byte - size of buffer
     // n bytes - Data to send to the datastream.
     void Datastream::handle_datastream() {
-        uint count = io::read_blocking();
-        for (uint x = 0; x < count; x++) {
+        int count = io::read_blocking();
+        for (int x = 0; x < count; x++) {
             this->databuffer.add(io::read_blocking());
         }
         this->pending_data = false;
@@ -77,9 +78,9 @@ namespace n64 {
     //   1 byte  - controller info (0 disconnected)
     //   3 bytes - controller header
     void Datastream::handle_controller_config() {
-        for (uint x = 0; x < N64_CONTROLLER_COUNT; x++) {
+        for (int x = 0; x < N64_CONTROLLER_COUNT; x++) {
             this->controllers[x].connected = !!io::read_blocking();
-            for (uint n = 0; n < sizeof(this->controllers[x].header); n++) {
+            for (int n = 0; n < (int)sizeof(this->controllers[x].header); n++) {
                 this->controllers[x].header[n] = io::read_blocking();
             }
         }
@@ -138,7 +139,7 @@ namespace n64 {
         //     oneline::read_byte_blocking(port);
         //     fast_wait_us(6);
         //     writer.begin_reply(33);
-        //     for (uint n = 0; n < 33; n++) {
+        //     for (int n = 0; n < 33; n++) {
         //         writer.write(state->buffer.get());
         //     }
         //     break;
