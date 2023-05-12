@@ -20,7 +20,7 @@
 #include <hardware/pio.h>
 #include <hardware/clocks.h>
 
-#include "base_device.h"
+#include "devices.h"
 #include "helpers.h"
 
 // REFERENCE: https://kthompson.gitlab.io/2016/07/26/n64-controller-protocol.html
@@ -68,7 +68,7 @@ namespace oneline {
     void handle_irq() {
         Port port = get_port();
         if (port != port_invalid) {
-            if (current_device != 0 && current_device->is_oneline()) {
+            if (current_device->is_oneline()) {
                 DATASTREAM_START();
                 ((OnelineDevice*)current_device)->handle_oneline(port);
                 DATASTREAM_END();

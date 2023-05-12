@@ -29,6 +29,7 @@ namespace io {
         CommandWriter& write_short(uint16_t data);
         CommandWriter& write_int(uint32_t data);
         CommandWriter& write_bytes(const byte *data, int count);
+        CommandWriter& write_str(const char *data);
     };
 
     class LogWriter : private CommandWriter {

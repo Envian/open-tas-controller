@@ -55,12 +55,11 @@ class N64Movie(Movie):
 		self.inputs = ([],) * controllers
 
 	def play(self, connection, statusFunction = None):
-		#connection.write("c".encode()) # begin playback
-		#connection.write("n64".encode()) # Nintendo 64
-		#connection.write(bytearray([self.controllers]))
-		#connection.write(bytearray([0x81, 0x04])) # Temp - Set Controller packet size.
-		connection.write(bytearray([0x00])) #Connected byte (temp)
-		connection.write(bytearray([0x81])) #Controller Config Raw Cmd
+		connection.write(bytearray([0x80])) #Set Device
+		connection.write(b"N64")
+		connection.write(bytearray([0x03]))
+
+		connection.write(bytearray([0xD1])) #Controller Config Raw Cmd
 		connection.write(bytearray([0x01, 0x05, 0x00, 0x02]))
 		connection.write(bytearray([0x00, 0x00, 0x00, 0x00]))
 		connection.write(bytearray([0x00, 0x00, 0x00, 0x00]))
@@ -72,11 +71,11 @@ class N64Movie(Movie):
 			if command in [0xFC, 0xFD, 0xFE, 0xFF]:
 				data = connection.read_until(b"\n")[:-1]
 				statusFunction(self, frame, None, PREFIX[command] + data.decode("utf-8")) if statusFunction else None
-			elif command == 0x80:
+			elif command == 0xD0:
 				fcount = floor(connection.read(1)[0]/4)
 				data = b"".join(self.inputs[0][frame:frame + fcount])
 				frame += fcount
-				connection.write(bytearray([0x80, len(data)]) + data)
+				connection.write(bytearray([0xD0, len(data)]) + data)
 				statusFunction(self, frame, data[-1]) if statusFunction else None
 			else:
 				print("Unknown Command: " + bytearray([command]).hex())

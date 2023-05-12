@@ -22,12 +22,15 @@ namespace commands {
     namespace device {
         enum Command: byte {
             NOP = 0x00,
+            // All replies from 0x01 to 0x79 should be treated as text
+            REPLY = 0x02,
 
-            // Datastreams
-            DATASTREAM_REQUEST = 0x80,
-            DATASTREAM_STATUS = 0x81,
+            // 0xD0-0xDF - Datastream Commands
+            DATASTREAM_REQUEST = 0xD0,
+            DATASTREAM_STATUS = 0xD1,
 
-            // Messaging
+            // 0xF0-0xFF - Text/Info Commands
+            ACKNOWLEDGE = 0xF0,
             DEBUG = 0xFC,
             INFO = 0xFD,
             WARN = 0xFE,
@@ -36,11 +39,31 @@ namespace commands {
     };
     namespace host {
         enum Command: byte {
+            // 0x00 - 0x7F General Inqueries
+            // For these, use ASCII when available
             NOP = 0x00,
+            NOP_CR = '\r', 
+            NOP_LF = '\n', 
 
-            // Datastreams
-            DATASTREAM_DATA = 0x80,
-            CONTROLLER_CONFIG = 0x81
+            // Basic Inqueries
+            INFO = '?',
+            INFO_ALT = 'h',
+            INFO_ALT2 = 'H',
+            VERSION = 'V',
+
+            // 0x80-0x8F - Top Level Configuration
+            SET_DEVICE = 0x80,
+            STOP_DEVICE = 0x81,
+
+            // 0x90-0xAF - Device Configuration
+
+            // 0xB0-0xBF - Reader Commands
+
+            // 0xC0-0xCF - Writer Commands
+            
+            // 0xD0-0xDF - Datastream Commands
+            DATASTREAM_DATA = 0xD0,
+            CONTROLLER_CONFIG = 0xD1,
         };
     };
 }

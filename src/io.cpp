@@ -17,7 +17,7 @@
 
 #include <stdio.h>
 
-#include "base_device.h"
+#include "devices.h"
 #include "labels.h"
 
 #define MAINCORE (get_core_num() == 0)
@@ -65,7 +65,14 @@ namespace io {
             putchar_raw(*(data + x));
         }
         return *this;
-    } 
+    }
+    CommandWriter& CommandWriter::write_str(const char* message) { 
+        while (*message) {
+            CommandWriter::write_byte(*message);
+            message++;
+        }
+        return *this;
+    }
 
 
     LogWriter::LogWriter(commands::device::Command command, const char* msg) 

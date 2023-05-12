@@ -27,9 +27,9 @@ def connectToController(port, rate):
 	controller = Serial(port, rate, timeout=10)
 	
 	# Temp: Send a message to the controller to trigger the preamble
-	# controller.write(b"?")
-	# preamble = controller.read_until(b"\n")
-	# isOpenTAS = preamble.startswith(b"OpenTAS")
+	controller.write(b"?")
+	preamble = controller.read_until(b"\n")
+	isOpenTAS = preamble.startswith(b"OpenTAS")
 	controller.timeout = None
 
 	#return (controller, isOpenTAS)

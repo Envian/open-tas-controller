@@ -16,12 +16,14 @@
 
 #include "global.h"
 
-#include "base_device.h"
-#include "nintendo/n64_datastream.h"
+#include <hardware/gpio.h>
 
 #include "io.h"
+#include "labels.h"
+#include "devices.h"
+#include "nintendo/n64_datastream.h"
 
-#include <hardware/gpio.h>
+
 
 int main() {
     gpio_init(PICO_DEFAULT_LED_PIN);
@@ -29,21 +31,40 @@ int main() {
 
     stdio_init_all();
     
-    // Wait for a single byte before starting.
-    io::read_blocking();
-
-    current_device = new n64::Datastream();
-
     while(true) {
         // The blocking loop for reading will update the device.
-        switch (io::read_blocking()) {
-        case commands::host::NOP: break;
+        byte cmd = io::read_blocking();
+        switch (cmd) {
+        case commands::host::NOP: 
+        case commands::host::NOP_CR:
+        case commands::host::NOP_LF:
+            // Hides errors when interacting via serial.
+            break;
+
+        case commands::host::INFO:
+        case commands::host::INFO_ALT:
+        case commands::host::INFO_ALT2:
+            io::CommandWriter(commands::device::REPLY)
+                .write_str(labels::DEVICE_INFO).write_byte('\n');
+            break;
+
+        case commands::host::SET_DEVICE:
+            load_new_device();
+            break;
+
         case commands::host::DATASTREAM_DATA:
             current_device->handle_datastream();
             break;
+
         case commands::host::CONTROLLER_CONFIG:
             current_device->handle_controller_config();
             break;
+
+        default:
+            // Anything typeable should be considered the user typing in a serial program.
+            if (cmd > 0x79) {
+                io::Error(labels::ERROR_UNKNOWN_COMMAND).write_byte(cmd);
+            }
         }
     }
 }

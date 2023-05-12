@@ -18,9 +18,10 @@
 
 #include "helpers.h"
 
-BaseDevice *current_device;
+#define NOT_IMPL_WARNING {io::Warn(labels::WARN_OP_NOT_IMPLEMENTED).write(__FUNCTION__);}
+#define NO_DEVICE_WARNING {io::Warn(labels::WARN_NO_DEVICE).write(__FUNCTION__);}
 
-BaseDevice::BaseDevice() {}
+
 BaseDevice::~BaseDevice() {}
 
 void BaseDevice::update() {}
@@ -28,5 +29,8 @@ bool BaseDevice::is_oneline() const {
     return false;
 }
 
-void BaseDevice::handle_datastream() {};
-void BaseDevice::handle_controller_config() {};
+void BaseDevice::handle_datastream() NOT_IMPL_WARNING
+void DummyDevice::handle_datastream() NO_DEVICE_WARNING;
+
+void BaseDevice::handle_controller_config() NOT_IMPL_WARNING;
+void DummyDevice::handle_controller_config() NO_DEVICE_WARNING;

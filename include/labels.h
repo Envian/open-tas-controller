@@ -18,12 +18,16 @@
 #include "global.h"
 
 namespace labels {
+    static constexpr char DEVICE_INFO[] = "OpenTAS https://github.com/Envian/open-tas-controller/";
+
     static constexpr char CONSOLE_N64[] = "N64";
 
     static constexpr char DEVICE_TYPE_PLAYBACK[] = "PLAY";
     static constexpr char DEVICE_TYPE_RECORD[] = "RECORD";
     // Datastream is a variation of playback which can replay mupen movies.
     static constexpr char DEVICE_TYPE_DATASTREAM[] = "DATASTREAM";
+    // Realtime is for non-movie operations, such as mapping a PC controller to the device.
+    static constexpr char DEVICE_TYPE_REALTIME[] = "REALTIME";
 
     // PORT_INFO - Varies based on system.
     static constexpr char DEBUG_PORT_INFO[] = "PORT_INFO";
@@ -32,5 +36,19 @@ namespace labels {
     // DEVICE_INITIALIZED - Console(3char) - Type
     static constexpr char INFO_DEVICE_INIT[] = "DEVICE_INIT";
 
+    // Warnings
+    // WARN_OP_NOT_IMPLEMENTED - Method Name
+    static constexpr char WARN_OP_NOT_IMPLEMENTED[] = "OP_NOT_IMPLEMENTED";
+    // WARN_NO_DEVICE - Method Name
+    static constexpr char WARN_NO_DEVICE[] = "NO_DEVICE_SETUP";
+
     // Errors
+    // ERROR_UNKNOWN_COMMAND - Command(byte)
+    static constexpr char ERROR_UNKNOWN_COMMAND[] = "NO_DEVICE_SETUP";
+    // ERROR_UNSUPPORTED_DEVICE - System
+    static constexpr char ERROR_UNSUPPORTED_DEVICE[] = "UNSUPPORTED_DEVICE";
+    // ERROR_UNSUPPORTED_DEVICE - System
+    static constexpr char ERROR_UNKNOWN_DEVICE[] = "UNKNOWN_DEVICE";
+    // ERROR_UNSUPPORTED_DEVICE - System - Type
+    static constexpr char ERROR_UNKNOWN_MODE[] = "UNKNOWN_MODE";
 }

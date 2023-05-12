@@ -16,6 +16,8 @@
 
 #pragma once
 
+#define N64_SUPPORT
+
 #define ONELINE_PIN_PORT_1 6
 #define ONELINE_PIN_PORT_2 7
 #define ONELINE_PIN_PORT_3 26
