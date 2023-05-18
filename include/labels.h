@@ -41,14 +41,20 @@ namespace labels {
     static constexpr char WARN_OP_NOT_IMPLEMENTED[] = "OP_NOT_IMPLEMENTED";
     // WARN_NO_DEVICE - Method Name
     static constexpr char WARN_NO_DEVICE[] = "NO_DEVICE_SETUP";
+    // WARN_UNKNOWN_CONSOLE_CMD - Method Name
+    static constexpr char WARN_UNKNOWN_CONSOLE_CMD[] = "UNKNOWN_CONSOLE_CMD";
 
     // Errors
     // ERROR_UNKNOWN_COMMAND - Command(byte)
     static constexpr char ERROR_UNKNOWN_COMMAND[] = "NO_DEVICE_SETUP";
-    // ERROR_UNSUPPORTED_DEVICE - System
-    static constexpr char ERROR_UNSUPPORTED_DEVICE[] = "UNSUPPORTED_DEVICE";
-    // ERROR_UNSUPPORTED_DEVICE - System
+    // ERROR_SUPPORT_DISABLED
+    static constexpr char ERROR_SUPPORT_DISABLED[] = "SUPPORT_DISABLED";
+    // ERROR_UNKNOWN_DEVICE
     static constexpr char ERROR_UNKNOWN_DEVICE[] = "UNKNOWN_DEVICE";
-    // ERROR_UNSUPPORTED_DEVICE - System - Type
+    // ERROR_UNKNOWN_MODE
     static constexpr char ERROR_UNKNOWN_MODE[] = "UNKNOWN_MODE";
+    // ERROR_BUFFER_UNDERFLOW - file - line
+    static constexpr char ERROR_BUFFER_UNDERFLOW[] = "BUFFER_UNDERFLOW";
+    // ERROR_BUFFER_OVERFLOW - file - line
+    static constexpr char ERROR_BUFFER_OVERFLOW[] = "BUFFER_OVERFLOW";
 }

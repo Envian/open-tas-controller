@@ -50,16 +50,36 @@
 .define public F_PIO_MHZ 8
 .define public F_PIO (F_PIO_MHZ * 1000000)
 
+
+// Wait times are defined as the duration of the low segment of a 1 bit, 
+// or the high segment of a 0 bit. The subtraction is because this will be used
+// on commands which take a clock cycle.
+.define HALF_WAIT ((F_PIO_MHZ / 2) - 1)
+.define FULL_WAIT (F_PIO_MHZ - 1)
+
+
+// --------------- //
+//     READING     //
+// --------------- //
+
+// x is used as a source of 1's for sending to the PC.
+// y counts how many bits were sent (bit inverted)
+// Sends 1 (bit inverted) 
+
 .wrap_target
 start:
     mov y ! null
     mov x ! null
+
+
+// Waits until the line goes low.
+// Signals immidiately to the IRQ that data is ready on the PIO.
 next_bit:
     push iffull
     wait 1 pin 0
-    wait 0 pin 0        [(F_PIO_MHZ / 2) - 1]
-    irq set 0 rel       [F_PIO_MHZ - 1]
-    jmp pin one_bit     [F_PIO_MHZ - 1]
+    wait 0 pin 0        [HALF_WAIT]
+    irq set 0 rel       [FULL_WAIT]
+    jmp pin one_bit     [FULL_WAIT]
     jmp pin reset_bit
 
 zero_bit:
@@ -70,11 +90,18 @@ one_bit:
     in x 1
     jmp y-- next_bit
 
+// Push whatever data we have in the buffer, then send up the value of y
 public reset_bit:
     push
     in y 32
     push
     jmp start
+
+
+// --------------- //
+//     WRITING     //
+// --------------- //
+
 
 public write_reply:
     set x 0
@@ -88,16 +115,18 @@ write_loop_return:
     nop
 write_loop:
     pull ifempty
-    set pindirs 1       [F_PIO_MHZ - 1]
-    out pindirs 1       [F_PIO_MHZ - 1]
-    nop                 [F_PIO_MHZ - 1]
-    set pindirs 0       [F_PIO_MHZ - 4]
+    set pindirs 1       [FULL_WAIT]
+    out pindirs 1       [FULL_WAIT]
+    nop                 [FULL_WAIT]
+    set pindirs 0       [FULL_WAIT - 3]
     jmp y-- write_loop_return  // This is the only jmp y-- we use as intended.
 
 // Cleanup PIO state & Send end bit if x is not set to 0
+// TODO: This could likely handle the handoff bit for requests by running jmp
+// between the set pindirs.
     mov isr null
     jmp x-- start
-    set pindirs 1       [F_PIO_MHZ - 1]
-    nop                 [F_PIO_MHZ - 1]
+    set pindirs 1       [FULL_WAIT]
+    nop                 [FULL_WAIT]
     set pindirs 0
 .wrap

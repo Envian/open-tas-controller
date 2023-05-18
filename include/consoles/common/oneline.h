@@ -54,6 +54,7 @@ namespace oneline {
         // void begin_request(int bytes);
         Writer& write(byte data);
         Writer& write(const byte* buffer);
+        Writer& write(const byte* buffer, int count);
         Writer& write_zeros();
     private:
         const Port port;

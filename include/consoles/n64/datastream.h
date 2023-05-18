@@ -16,12 +16,13 @@
 
 #pragma once
 #include "global.h"
-#include "nintendo/model.h"
+#include "consoles/n64/model.h"
 
-#include "nintendo/oneline.h"
+#include "consoles/common/oneline.h"
 #include "circular_queue.h"
 
-#define DATASTREAM_BUFFER_SIZE 64
+#define DATASTREAM_BUFFER_SIZE 128
+#define RAW_DATA_STREAM_SIZE 512
 #define N64_CONTROLLER_COUNT 4
 
 namespace n64 {
@@ -41,6 +42,6 @@ namespace n64 {
         oneline::Port last_port;
         byte last_input[4];
         ControllerConfig controllers[N64_CONTROLLER_COUNT];
-        CircularQueue<byte, DATASTREAM_BUFFER_SIZE> databuffer;
+        CircularQueue<byte> databuffer = CircularQueue<byte>(DATASTREAM_BUFFER_SIZE);
     };
 }

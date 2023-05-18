@@ -25,6 +25,9 @@ namespace commands {
             // All replies from 0x01 to 0x79 should be treated as text
             REPLY = 0x02,
 
+            // 0xB0-0xBF - Recording Commands
+            RAW_DATA = 0xB0,
+
             // 0xD0-0xDF - Datastream Commands
             DATASTREAM_REQUEST = 0xD0,
             DATASTREAM_STATUS = 0xD1,
@@ -57,9 +60,9 @@ namespace commands {
 
             // 0x90-0xAF - Device Configuration
 
-            // 0xB0-0xBF - Reader Commands
+            // 0xB0-0xBF - Recording Commands
 
-            // 0xC0-0xCF - Writer Commands
+            // 0xC0-0xCF - Playback Commands
             
             // 0xD0-0xDF - Datastream Commands
             DATASTREAM_DATA = 0xD0,

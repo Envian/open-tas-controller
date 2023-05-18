@@ -20,7 +20,7 @@ from argparse import ArgumentParser, FileType
 import os
 
 from core.services import connectToController, loadMovie, getFormatByName
-from core.output import printPlayProgress
+from core.output import printPlayProgress, printN64Inputs
 
 import core.movies
 
@@ -69,7 +69,7 @@ def play(controller, arguments):
 def record(controller, arguments):
 	print("Preparing to record movie... ", end="", flush=True)
 	movie = core.movies.N64Movie("test", 1, "test", "test")
-	movie.record(controller, debugPrint)
+	movie.record(controller, printN64Inputs)
 
 	print("\n\n\n")
 

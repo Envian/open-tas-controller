@@ -36,7 +36,8 @@ enum DeviceType {
 #define MAKE_ID(VALUE) (((uint32_t)VALUE[0] << 16) | ((uint32_t)VALUE[1] << 8) | ((uint32_t)VALUE[2]))
 
 #ifdef N64_SUPPORT
-#include "nintendo/n64_datastream.h"
+#include "consoles/n64/datastream.h"
+#include "consoles/n64/recorder.h"
 #endif
 
 void load_new_device() {
@@ -52,13 +53,17 @@ void load_new_device() {
 
     byte device_type = io::read_blocking();
 
+    // Validate that the device identifier is valid. Otherwise we may echo an invalid string
     switch (MAKE_ID(device_identifier)) {
     case MAKE_ID(labels::CONSOLE_N64):
 #ifdef N64_SUPPORT
         switch (device_type) {
-            case DEVICE_SPECIFIC_1: 
+        case RECORD:
+            current_device = new n64::Recorder();
+            return;
+        case DEVICE_SPECIFIC_1: 
             current_device = new n64::Datastream();
-            break;
+            return;
         default:
             UNKNOWN_MODE(labels::CONSOLE_N64, device_type);
             break;
@@ -68,8 +73,9 @@ void load_new_device() {
 #endif
         break;
     default:
-        io::Error(labels::ERROR_UNKNOWN_DEVICE).write((const char*)device_identifier);
-        break;
+        io::Error(labels::ERROR_SUPPORT_DISABLED).send();
+    break;
     }
 
+    current_device = new DummyDevice();
 }

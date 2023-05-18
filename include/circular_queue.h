@@ -16,51 +16,70 @@
 #pragma once
 #include "global.h"
 
-template <typename T, int SIZE>
+template <typename T>
 class CircularQueue {
 private:
-    T buffer[SIZE];
+    const int size;
+    T* buffer;
     int rptr = 0, wptr = 0;
     int available = 0;
     bool underflow = false, overflow = false;
+
+    // I keep getting burned by pass by value vs pass by reference. 
+    CircularQueue(const CircularQueue& other) = delete;
+    CircularQueue& operator=(const CircularQueue& other) = delete;
+    CircularQueue(CircularQueue&& other) = delete;
+    CircularQueue& operator=(CircularQueue&& other) = delete;
 public:
-    CircularQueue() {
+    CircularQueue(int size) : size(size), buffer(new T[size]) {
         wptr = 0;
         rptr = 0;
         available = 0;
-        for (int x = 0; x < (int)sizeof(buffer); x++) {
-            *((byte*)buffer + x) = 0;
-        }
+        // Do we need to clear the buffer before use?
+        // for (int x = 0; x < sizeof(T) * size; x++) {
+        //     *((byte*)buffer + x) = 0;
+        // }
+    }
+    ~CircularQueue() {
+        delete buffer;
     }
 
     T get() {
         T value = buffer[rptr];
-        rptr = (rptr + 1) % SIZE;
+        rptr = (rptr + 1) % size;
         available--;
         underflow |= available < 0;
         return value;
     }
 
+    T get_blocking() {
+        while (gets_avaiable() == 0) { tight_loop_contents(); }
+        return get();
+    }
+
     void add(T value) {
         buffer[wptr] = value;
-        wptr = (wptr + 1) % SIZE;
+        wptr = (wptr + 1) % size;
         available++;
-        overflow |= available >= SIZE;
+        overflow |= available >= size;
     }
     
     void add(const T values[], int count) {
         for (int x = 0; x < count; x++) {
-            buffer[(wptr + x) % SIZE] = values[x];
+            buffer[(wptr + x) % size] = values[x];
         }
-        wptr = (wptr + count) % SIZE;
+        wptr = (wptr + count) % size;
         available += count;
-        overflow |= available >= SIZE;
+        overflow |= available >= size;
     }
 
     int gets_avaiable() {
         return available;
     }
     int adds_available() {
-        return SIZE - available;
+        return size - available;
     }
+
+    bool overflowed() const { return overflow; }
+    bool underflowed() const { return underflow; }
 };

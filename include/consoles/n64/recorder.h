@@ -15,11 +15,27 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
-#define PICO_STDIO_ENABLE_CRLF_SUPPORT 0
+#include "global.h"
+#include "consoles/n64/model.h"
 
-#define PICO_DEFAULT_LED_PIN 0
+#include "consoles/common/oneline.h"
+#include "circular_queue.h"
 
-#include <pico/stdlib.h>
-#include "config.h"
+#define READER_BUFFER_SIZE 64
+#define READER_STREAM_SIZE 512
 
-typedef uint8_t byte;
+namespace n64 {
+    class Recorder : public oneline::OnelineDevice {
+    public:
+        Recorder();
+        ~Recorder() override;
+
+        void update() override;
+        
+        void handle_oneline(oneline::Port port) override;
+    private:
+        byte last_invalid_command;
+        byte read_buffer[READER_BUFFER_SIZE] = {};
+        CircularQueue<byte> reader_data = CircularQueue<byte>(READER_STREAM_SIZE);
+    };
+}

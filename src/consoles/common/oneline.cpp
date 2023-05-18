@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include "nintendo/oneline.h"
+#include "consoles/common/oneline.h"
 #include "oneline.pio.h"
 
 #include <hardware/pio.h>
@@ -47,9 +47,9 @@ namespace oneline {
     };
 
     // Shortcut Methods
-    const inline bool can_read(Port port) { return !pio_sm_is_rx_fifo_empty(ONELINE_PIO, (uint)port); }
+    inline bool can_read(Port port) { return !pio_sm_is_rx_fifo_empty(ONELINE_PIO, (uint)port); }
     inline uint32_t read(Port port) { return pio_sm_get(ONELINE_PIO, (uint)port); }
-    const inline bool can_write(Port port) { return !pio_sm_is_tx_fifo_full(ONELINE_PIO, (uint)port); }
+    inline bool can_write(Port port) { return !pio_sm_is_tx_fifo_full(ONELINE_PIO, (uint)port); }
     inline void write(Port port, uint32_t data) { pio_sm_put(ONELINE_PIO, (uint)port, data); }
     inline void write_blocking(Port port, uint32_t data) { pio_sm_put_blocking(ONELINE_PIO, (uint)port, data); }
     inline void jump(Port port, uint offset) { pio_sm_exec(ONELINE_PIO, port, pio_encode_jmp(pio_offset + offset)); }
@@ -66,14 +66,18 @@ namespace oneline {
     }
 
     void handle_irq() {
-        Port port = get_port();
-        if (port != port_invalid) {
-            if (current_device->is_oneline()) {
-                DATASTREAM_START();
-                ((OnelineDevice*)current_device)->handle_oneline(port);
+        DATASTREAM_START();
+        while (true) {
+            Port port = get_port();
+            if (port != port_invalid) {
+                if (current_device->is_oneline()) {
+                    ((OnelineDevice*)current_device)->handle_oneline(port);
+                }
+                pio_interrupt_clear(ONELINE_PIO, port);
+            } else {
                 DATASTREAM_END();
+                return;
             }
-            pio_interrupt_clear(ONELINE_PIO, port);
         }
     }
 
@@ -154,7 +158,9 @@ namespace oneline {
                     if (bytes > request_bytes && bytes <= count) { buffer[bytes-1] |= (last_read >> 8) & 1; }
                     if (bytes < count) { buffer[bytes] = last_read; }
 
-                    return ~data;
+                    // Despite the bytes-- above, there will always be one "ghost" byte
+                    // added due to the handoff bit.
+                    return bytes;
                 }
             } else if (TIMED_OUT(last_activity, ONELINE_READ_TIMEOUT_US)) {
                 abort_read(port);
@@ -209,7 +215,7 @@ namespace oneline {
     //     write_bytes(port, buffer, count);
     // }
 
-    Writer::Writer(Port port, int count) : port(port), bytes(count) {
+    __time_critical_func(Writer::Writer)(Port port, int count) : port(port), bytes(count) {
         this->written = 0;
         start_reply(this->port, bytes * 8);
     }
@@ -221,7 +227,7 @@ namespace oneline {
     //     start_request(this->port, bytes * 8 + 1);
     // }
 
-    Writer& Writer::write(byte value) {
+    Writer& __time_critical_func(Writer::write)(byte value) {
         // Shift the data we plan to write into the buffer.
         this->data = (this->data << 8) | value;
         this->written++;
@@ -238,14 +244,18 @@ namespace oneline {
         return *this;
     }
 
-    Writer& Writer::write(const byte* buffer) {
-        for (int n = 0; this->written < this->bytes; n++) {
+    Writer& __time_critical_func(Writer::write)(const byte* buffer) {
+        return this->write(buffer, this->bytes - this->written);
+    }
+
+    Writer& __time_critical_func(Writer::write)(const byte* buffer, int count) {
+        for (int n = 0; n < count; n++) {
             this->write(buffer[n]);
         }
         return *this;
     }
 
-    Writer& Writer::write_zeros() {
+    Writer& __time_critical_func(Writer::write_zeros)() {
         for (; this->written < this->bytes; this->written += 4) {
             write_blocking(this->port, ~0);
         }

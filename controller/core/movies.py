@@ -57,7 +57,7 @@ class N64Movie(Movie):
 	def play(self, connection, statusFunction = None):
 		connection.write(bytearray([0x80])) #Set Device
 		connection.write(b"N64")
-		connection.write(bytearray([0x03]))
+		connection.write(bytearray([0x03])) #Datastream Playback Mode
 
 		connection.write(bytearray([0xD1])) #Controller Config Raw Cmd
 		connection.write(bytearray([0x01, 0x05, 0x00, 0x02]))
@@ -88,15 +88,32 @@ class N64Movie(Movie):
 		# 	statusFunction(self, frame, inputs) if statusFunction else None
 
 	def record(self, connection, statusFunction = None):
-		connection.write(bytearray([0x0B])) # begin Recording
-		connection.write(bytearray([0x40])) # Nintendo 64
-		connection.write(bytearray([self.controllers]))
+		connection.write(bytearray([0x80])) #Set Device
+		connection.write(b"N64")
+		connection.write(bytearray([0x01])) #Record Mode
+
+		print("Got it?")
 
 		try:
 			while True:
-				inputs = [connection.read(4) for x in range(self.controllers)]
-				self.write(b"".join(inputs))
-				statusFunction(self, frame, inputs) if statusFunction else None
+				command = connection.read(1)[0]	
+				if command in [0xFC, 0xFD, 0xFE, 0xFF]:
+					data = connection.read_until(b"\n")[:-1]
+					statusFunction(self, message = PREFIX[command] + data.decode("utf-8")) if statusFunction else None
+				elif command == 0xB0:
+					(port, size, request_size) = connection.read(3)
+					request = connection.read(request_size)
+					response = connection.read(size - request_size)
+
+					print(" ".join([
+						bytearray([port]).hex(),
+						bytearray([size]).hex(),
+						bytearray([request_size]).hex(),
+						request.hex(),
+						response.hex()
+					]))
+				else:
+					print("Unknown Command: " + bytearray([command]).hex())
 
 
 		except KeyboardInterrupt:

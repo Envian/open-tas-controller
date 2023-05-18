@@ -21,8 +21,6 @@
 #include "io.h"
 #include "labels.h"
 #include "devices.h"
-#include "nintendo/n64_datastream.h"
-
 
 
 int main() {

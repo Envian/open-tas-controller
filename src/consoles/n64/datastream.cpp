@@ -14,13 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include "nintendo/n64_datastream.h"
+#include "consoles/n64/datastream.h"
 
 #include <pico/multicore.h>
-#include <hardware/irq.h>
 
 #include "helpers.h"
-#include "nintendo/oneline.h"
+#include "consoles/common/oneline.h"
 #include "io.h"
 
 #ifdef LED_SHOWS_DATASTREAM_STATUS

@@ -30,15 +30,17 @@ def printPlayProgress(movie, frame, inputs, message=None):
 	print("\b" * len(line), end="", flush=False)
 
 
-def printN64Inputs(movie, frame, inputs):
-	display = ["A", "B", "Z", "S", "↑", "↓", "←", "→", "!", "!", "L", "R", "^", "v", "<", ">"].reverse()
-	data = inputs[0][0] * 256 + inputs[0][1]
+def printN64Inputs(movie, message=None):
+	if message:
+		print(message)
+	# display = ["A", "B", "Z", "S", "↑", "↓", "←", "→", "!", "!", "L", "R", "^", "v", "<", ">"].reverse()
+	# data = inputs[0][0] * 256 + inputs[0][1]
 
-	for x in range(len(display)):
-		if not data & (2 ** x):
-			display[x] = " " * len(display[x])
+	# for x in range(len(display)):
+	# 	if not data & (2 ** x):
+	# 		display[x] = " " * len(display[x])
 
-	text = "inputs: " + display.join(" ")
+	# text = "inputs: " + display.join(" ")
 
-	print(text, end=None, flush=True)
-	print("\b" * len(text), end=None, flush=False)
+	# print(text, end=None, flush=True)
+	# print("\b" * len(text), end=None, flush=False)

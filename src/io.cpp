@@ -20,8 +20,6 @@
 #include "devices.h"
 #include "labels.h"
 
-#define MAINCORE (get_core_num() == 0)
-
 static constexpr char NIBLE_CHARACTER_MAPPING[] = {
     '0', '1', '2', '3',
     '4', '5', '6', '7',
@@ -63,6 +61,12 @@ namespace io {
     CommandWriter& CommandWriter::write_bytes(const byte* data, int count) {
         for (int x = 0; x < count; x++) {
             putchar_raw(*(data + x));
+        }
+        return *this;
+    }
+    CommandWriter& CommandWriter::write_bytes(CircularQueue<byte>* data, int count) {
+        for (int x = 0; x < count; x++) {
+            putchar_raw(data->get());
         }
         return *this;
     }

@@ -15,7 +15,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-ignored-qualifiers")
 
 pico_sdk_init()
 
-file(GLOB SRC_FILES CONFIGURE_DEPENDS "./src/*.cpp" "./src/**/*.cpp")
+file(GLOB SRC_FILES CONFIGURE_DEPENDS "./src/*.cpp" "./src/**/*.cpp" "./src/**/**/*.cpp")
 file(GLOB PIO_FILES CONFIGURE_DEPENDS "./pio/*.pio")
 
 include_directories(./include ./pio)
