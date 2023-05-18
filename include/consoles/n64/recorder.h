@@ -25,7 +25,7 @@
 #define READER_STREAM_SIZE 512
 
 namespace n64 {
-    class Recorder : public oneline::OnelineDevice {
+    class Recorder : public BaseDevice, public oneline::OnelineHandler {
     public:
         Recorder();
         ~Recorder() override;

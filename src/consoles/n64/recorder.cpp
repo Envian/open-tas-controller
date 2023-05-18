@@ -24,11 +24,12 @@
 
 namespace n64 {
     Recorder::Recorder() {
-        oneline::init();
+        oneline::init(this);
         io::Info(labels::INFO_DEVICE_INIT).write(labels::CONSOLE_N64).write(labels::DEVICE_TYPE_DATASTREAM);
     }
 
     Recorder::~Recorder() {
+        oneline::uninit();
     }
 
     void Recorder::update() {
@@ -60,6 +61,11 @@ namespace n64 {
     
     void Recorder::handle_oneline(oneline::Port port) {
         int command = oneline::read_byte_blocking(port);
+
+        if (command == -1) {
+            return;
+        }
+
         int additional_request_bytes = 0;
         int response_bytes = 0;
 

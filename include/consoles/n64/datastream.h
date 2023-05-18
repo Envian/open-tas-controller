@@ -26,7 +26,7 @@
 #define N64_CONTROLLER_COUNT 4
 
 namespace n64 {
-    class Datastream : public oneline::OnelineDevice {
+    class Datastream : public BaseDevice, public oneline::OnelineHandler {
     public:
         Datastream();
         ~Datastream() override;

@@ -39,47 +39,9 @@
 
 namespace oneline {
     uint pio_offset = 0;
+    OnelineHandler* oneline_handler = nullptr;
 
-    bool OnelineDevice::is_oneline() const { return true; }
-    void OnelineDevice::handle_oneline([[maybe_unused]] Port port) { 
-        // TODO: Error log here, but we can't just log straight to stdio.
-        // This will be called in an interrupt and cannot safely write.
-    };
-
-    // Shortcut Methods
-    inline bool can_read(Port port) { return !pio_sm_is_rx_fifo_empty(ONELINE_PIO, (uint)port); }
-    inline uint32_t read(Port port) { return pio_sm_get(ONELINE_PIO, (uint)port); }
-    inline bool can_write(Port port) { return !pio_sm_is_tx_fifo_full(ONELINE_PIO, (uint)port); }
-    inline void write(Port port, uint32_t data) { pio_sm_put(ONELINE_PIO, (uint)port, data); }
-    inline void write_blocking(Port port, uint32_t data) { pio_sm_put_blocking(ONELINE_PIO, (uint)port, data); }
-    inline void jump(Port port, uint offset) { pio_sm_exec(ONELINE_PIO, port, pio_encode_jmp(pio_offset + offset)); }
-    inline void abort_read(Port port) { jump(port, oneline_offset_reset_bit); }
-    //inline void start_request(Port port, uint bits) { write(port, bits); jump(port, oneline_offset_write_request); }
-    inline void start_reply(Port port, uint bits) { write(port, bits); jump(port, oneline_offset_write_reply); }
-
-    const Port get_port() {
-        if (pio_interrupt_get(ONELINE_PIO, (uint)port_1)) { return port_1; }
-        if (pio_interrupt_get(ONELINE_PIO, (uint)port_2)) { return port_2; }
-        if (pio_interrupt_get(ONELINE_PIO, (uint)port_3)) { return port_3; }
-        if (pio_interrupt_get(ONELINE_PIO, (uint)port_4)) { return port_4; }
-        return port_invalid;
-    }
-
-    void handle_irq() {
-        DATASTREAM_START();
-        while (true) {
-            Port port = get_port();
-            if (port != port_invalid) {
-                if (current_device->is_oneline()) {
-                    ((OnelineDevice*)current_device)->handle_oneline(port);
-                }
-                pio_interrupt_clear(ONELINE_PIO, port);
-            } else {
-                DATASTREAM_END();
-                return;
-            }
-        }
-    }
+    void handle_irq();
 
     void setup_port(Port port, uint pin) {
         pio_gpio_init(ONELINE_PIO, pin);
@@ -101,15 +63,70 @@ namespace oneline {
         pio_sm_set_enabled(ONELINE_PIO, (uint)port, true);
     }
 
-    void init() {
+    void setdown_port(Port port) {
+        pio_sm_set_enabled(ONELINE_PIO, port, false);
+        pio_sm_clear_fifos(ONELINE_PIO, port);
+        pio_set_irq0_source_enabled(ONELINE_PIO, (pio_interrupt_source)(pis_interrupt0 + (uint)port), false);
+    }
+
+    void init(OnelineHandler* handler) {
         pio_offset = pio_add_program(ONELINE_PIO, &oneline_program);
-        irq_set_enabled(ONELINE_IRQ, true);
         irq_set_exclusive_handler(ONELINE_IRQ, handle_irq);
+        irq_set_enabled(ONELINE_IRQ, true);
 
         setup_port(port_1, ONELINE_PIN_PORT_1);
         setup_port(port_2, ONELINE_PIN_PORT_2);
         setup_port(port_3, ONELINE_PIN_PORT_3);
         setup_port(port_4, ONELINE_PIN_PORT_4);
+
+        oneline_handler = handler;
+    }
+
+    void uninit() {
+        oneline_handler = nullptr;
+
+        setdown_port(port_1);
+        setdown_port(port_2);
+        setdown_port(port_3);
+        setdown_port(port_4);
+
+        irq_set_enabled(ONELINE_IRQ, false);
+        irq_remove_handler(ONELINE_IRQ, handle_irq);
+        pio_remove_program(ONELINE_PIO, &oneline_program, pio_offset);
+    }
+
+
+    // Shortcut Methods
+    inline bool can_read(Port port) { return !pio_sm_is_rx_fifo_empty(ONELINE_PIO, (uint)port); }
+    inline uint32_t read(Port port) { return pio_sm_get(ONELINE_PIO, (uint)port); }
+    inline bool can_write(Port port) { return !pio_sm_is_tx_fifo_full(ONELINE_PIO, (uint)port); }
+    inline void write(Port port, uint32_t data) { pio_sm_put(ONELINE_PIO, (uint)port, data); }
+    inline void write_blocking(Port port, uint32_t data) { pio_sm_put_blocking(ONELINE_PIO, (uint)port, data); }
+    inline void jump(Port port, uint offset) { pio_sm_exec(ONELINE_PIO, port, pio_encode_jmp(pio_offset + offset)); }
+    inline void abort_read(Port port) { jump(port, oneline_offset_reset_bit); }
+    //inline void start_request(Port port, uint bits) { write(port, bits); jump(port, oneline_offset_write_request); }
+    inline void start_reply(Port port, uint bits) { write(port, bits); jump(port, oneline_offset_write_reply); }
+
+    const Port get_port() {
+        if (pio_interrupt_get(ONELINE_PIO, (uint)port_1)) { return port_1; }
+        if (pio_interrupt_get(ONELINE_PIO, (uint)port_2)) { return port_2; }
+        if (pio_interrupt_get(ONELINE_PIO, (uint)port_3)) { return port_3; }
+        if (pio_interrupt_get(ONELINE_PIO, (uint)port_4)) { return port_4; }
+        return port_invalid;
+    }
+
+    void handle_irq() {
+        if (oneline_handler == nullptr) {
+            return;
+        }
+
+        DATASTREAM_START();
+        Port port = get_port();
+        if (port != port_invalid) {
+            oneline_handler->handle_oneline(port);
+            pio_interrupt_clear(ONELINE_PIO, port);
+        }
+        DATASTREAM_END();
     }
 
     // --------------------

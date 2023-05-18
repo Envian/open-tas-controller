@@ -40,12 +40,12 @@ namespace n64 {
             }
         }
 
-        oneline::init();
+        oneline::init(this);
         io::Info(labels::INFO_DEVICE_INIT).write(labels::CONSOLE_N64).write(labels::DEVICE_TYPE_DATASTREAM);
     }
 
     Datastream::~Datastream() {
-        // TODO: Deconstructor
+        oneline::uninit();
     }
 
     void Datastream::update() {

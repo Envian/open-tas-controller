@@ -79,3 +79,8 @@ void load_new_device() {
 
     current_device = new DummyDevice();
 }
+
+void reset_device() {
+    delete current_device;
+    current_device = new DummyDevice();
+}

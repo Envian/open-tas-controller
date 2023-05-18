@@ -32,13 +32,13 @@ namespace oneline {
         port_invalid = -1
     };
 
-    class OnelineDevice : public BaseDevice {
+    class OnelineHandler {
     public:
-        virtual bool is_oneline() const override;
-        virtual void handle_oneline(Port port);
+        virtual void handle_oneline(Port port) = 0;
     };
 
-    void init();
+    void init(OnelineHandler* handler);
+    void uninit();
 
     int read_byte_blocking(Port port);
     int read_bytes_blocking(byte buffer[], Port port, int count, int request_bytes);

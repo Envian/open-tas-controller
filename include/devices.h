@@ -21,3 +21,4 @@
 extern BaseDevice *current_device;
 
 void load_new_device();
+void reset_device();

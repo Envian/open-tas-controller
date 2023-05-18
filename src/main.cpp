@@ -50,6 +50,10 @@ int main() {
             load_new_device();
             break;
 
+        case commands::host::STOP_DEVICE:
+            reset_device();
+            break;
+
         case commands::host::DATASTREAM_DATA:
             current_device->handle_datastream();
             break;
